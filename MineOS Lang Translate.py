@@ -16,9 +16,9 @@
 
 __title__ = 'English to Lolcat lang file converter'
 __author__ = 'CoolCat467'
-__version__ = '0.0.0'
+__version__ = '0.1.0'
 __ver_major__ = 0
-__ver_minor__ = 0
+__ver_minor__ = 1
 __ver_patch__ = 0
 
 READ = 'English.lang'
@@ -56,7 +56,7 @@ def readLang(filename):
         # Record value in dictionary saved as key to value
         vsmap[n] = v
     # Fix last one with wierdness
-    vsmap[n] = vsmap[n][:-1]
+    vsmap[n] = vsmap[n][:-3]
     # Return created dictionary
     return vsmap
 
