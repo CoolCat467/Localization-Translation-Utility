@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# English to other lang file converter.
+# Localization Translator Helper.
 # -*- coding: utf-8 -*-
 
 # Semi-compadable with Google Translate.
@@ -14,11 +14,11 @@
 
 # Programmed by CoolCat467
 
-__title__ = 'English to Lolcat lang file converter'
+__title__ = 'Localization Translator Helper'
 __author__ = 'CoolCat467'
-__version__ = '0.1.0'
-__ver_major__ = 0
-__ver_minor__ = 1
+__version__ = '1.0.0'
+__ver_major__ = 1
+__ver_minor__ = 0
 __ver_patch__ = 0
 
 READ = 'English.lang'
@@ -37,26 +37,69 @@ def writeData(filename, data):
         writefile.write(data)
         writefile.close()
 
-def readLang(filename):
+def readLang(filename, maxsplen=8, _recursion=False):
     """Read database from filename and convert to dictionary."""
     # Read data from file
     data = readData(filename)
     # Seperate data into individual lines
     lines = data.split('\n\t')
+    # If it's a broken file (not split by tabs)
+    if len(lines) == 1:
+        # Figure out where the spaces start
+        s = data.index(' ')
+        # Find the end of the spaces
+        e = data.index(data[s:s+maxsplen].replace(' ', '')[0])
+        # Use start and end to find the seperation and get line data back properly
+        lines = data.split('\n'+' '*(e-s))
+        # If somehow it's still broken, try to fix it but don't explode.
+        if len(lines) == 1:
+            if not _recursion:
+                return readLang(filename, maxsplen*3, True)
+            else:
+                raise RuntimeError(f'Invalid File "{filename}"')
     # Remove first empty value ('')
     info = lines[1:]
     # Create dictionary to save to
     vsmap = {}
+    # Define search function
+    def seccond(string, target, v=0.5):
+        # Try to find seccond instance of target
+        res = string.find(target, round(-len(string)*v))
+        # If index is invalid, return None
+        if res == -1:
+            return None
+        # Catch invalid selections (not seccond)
+        if string[res-2:res] == '= ':
+            # Delete first one we found from search and try again
+            lst = list(string)
+            del lst[res]
+            # with an offset of one because we deleted a character.
+            return seccond(''.join(lst), target, v) + 1
+        return res
     # Go through all lines from read file
+    an = False
     for entry in info:
-        # For each line, take off end and seperate variable to n and data to v
-        n, v = entry[:-1].split(' = ')
-        # Remove (") from start and end of value
-        v = v[1:-1]
+        # Get start of removeing index
+        rm = seccond(entry, '"', 0.6)
+        # Set entry to up to the seccond double quote
+        # and then get everything after that point
+        entry, rm = entry[:rm], entry[rm+1:]
+        # Seperate our entry into the key and the value that's in double quotes
+        n, v = entry.split(' = ')
+        # Remove double quotes from the start and end of our value.
+        if v.startswith('"'):
+            v = v[1:]
+        if v.endswith('"'):
+            v = v[:-1]
+        # If a linebreak character was in our removed characters,
+        if rm.startswith('\n'):
+            # add a fake linebreak back into the data
+            v += '_n_'
         # Record value in dictionary saved as key to value
         vsmap[n] = v
-    # Fix last one with wierdness
-    vsmap[n] = vsmap[n][:-3]
+    # Fix last one with wierdness with the closing curly bracket
+    if vsmap[n].endswith('_n_'):
+        vsmap[n] = vsmap[n][:-3]
     # Return created dictionary
     return vsmap
 
@@ -64,10 +107,20 @@ def writeLang(filename, data):
     """Convert dictionary to database file string and save."""
     # Start with the open curly bracket
     info = ['{']
+    # No linebreak char to add
+    an = False
     # For the keys and values of the dictionary input,
     for k, v in ((k, data[k]) for k in data):
+        # If there is a linebreak char, remove it and add it in in the proper place.
+        if v.endswith('\n'):
+            v = v[:-1]
+            an = True
         # Add '<key> = "<value>",' to the line data list
         info.append('%s = "%s",' % (k, v))
+        # Add linebreak char back
+        if an:
+            info[-1] += '\n'
+            an = False
     # Merge line data together with linebreak and tab characters
     # and take off the final tab and and add linebreak and
     # the end curly bracket to filedata string
@@ -106,7 +159,7 @@ def run():
         # Add '#<key number>*<value>' to toPaste data
         toPaste += ('#%i*' % num) + data[key].replace('\n', '_n_')
     # Print for user and get translated back
-    print('Somehow get the following translated:')
+    print('Copy-paste the following into some sort of translator (text within single quotes):')
     print("'"+toPaste+"'")
     # Get translated back from user
     copied = input('Enter translated result: ')
