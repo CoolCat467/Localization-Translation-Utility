@@ -15,6 +15,8 @@ SRCLANG = 'en'
 
 # Programmed by CoolCat467
 
+import os
+import asyncio
 import json
 
 CANAUTOTRANS = False
@@ -30,7 +32,7 @@ __title__ = 'Localization Translator Helper'
 __author__ = 'CoolCat467'
 __version__ = '2.0.0'
 __ver_major__ = 2
-__ver_minor__ = 0
+__ver_minor__ = 1
 __ver_patch__ = 0
 
 def readData(filename):
@@ -55,31 +57,95 @@ def infIntGen(start=0, change=1):
         yield n
         n += c
 
+##def toJsonReadable(data):
+##    """Read the contents of file data <data> and fix variable names so json module can read it as json."""
+##    fixed = []
+##    lines = data.splitlines()
+##    for lidx in range(len(lines)):
+##        line = lines[lidx]
+##        cidx = line.find('=')
+##        cidx = cidx if cidx != -1 else 0
+##        # cidx is now pointing to equal sign in line after var name
+##        search = line[:cidx]
+##        # Skip invalid lines that end up saying nothing
+##        if not search:
+##            fixed.append(line)
+##            continue
+##        # Get variable title
+##        vartitle = search.split()[0]
+##        # Replace variable title with itself in double quotes
+##        line = line.replace(vartitle, '"'+vartitle+'"', 1)
+##        # Replace equal sign with colon
+##        line = line.replace('=', ':', 1)
+##        # Add the line to fixed lines
+##        fixed.append(line)
+##    if fixed[-2].endswith(','):
+##        fixed[-2] = fixed[-2][:-1]
+##    return '\n'.join(fixed)
+
 def toJsonReadable(data):
     """Read the contents of file data <data> and fix variable names so json module can read it as json."""
     fixed = []
-    lines = data.splitlines()
+    # Lines is all the lines, seperated by splitlines,
+    # while making tiny chuncks seperate lines so vartitle fix happens,
+    # and also avoiding comment lines because that breaks everything.
+    lines = [line for line in data.replace(', ', ',\n').splitlines() if not '--' in line]
+    # Chunks is initialized with giant main chunk or IndexError happens from pop.
+    chuncks = [[0, '{}']]
     for lidx in range(len(lines)):
         line = lines[lidx]
         cidx = line.find('=')
         cidx = cidx if cidx != -1 else 0
         # cidx is now pointing to equal sign in line after var name
         search = line[:cidx]
+        # If this line is the end of a chunk
+        if '}' in line:
+            # Get the previous line
+            lline = fixed[lidx-1]
+            # If it ended with a trailing comma,
+            if lline.endswith(','):
+                # Remove the trailing comma and don't break things
+                fixed[lidx-1] = lline[:-1]
+            # Now, pop the chunk we were reading's start and type.
+            start, totype = chuncks.pop()
+            # If we need to modify it (change to list),
+            if totype == '[]':
+                # The start of the chunk should have its curly bracket changed
+                # into a square bracket
+                fixed[start] = fixed[start].replace('{', '[', 1)
+                # Replace this line (chunk end) curly bracket with square bracket
+                line = line.replace('}', ']', 1)
         # Skip invalid lines that end up saying nothing
         if not search:
+            # Add this line to the fixed lines and skip vartitle fixing
             fixed.append(line)
             continue
+        # If this line is the start of a chunk,
+        if '{' in line:
+            # Everything is a dictionary by default
+            cnktype = '{}'
+            # If the next line has another chunk start,
+            if '{' in lines[lidx+1]:
+                # Chunk type is list
+                cnktype = '[]'
+            # If next line isn't another chunk but it's not a dictionary,
+            elif not '=' in lines[lidx+1]:
+                # it's also a list.
+                cnktype = '[]'
+            # Add new chunk to chunks que
+            chuncks.append([lidx, cnktype])
         # Get variable title
-        vartitle = search.split()[0]
+        varsplt = search.split()
+        # Don't select chunk starts
+        vartitle = varsplt[0 if not '{' in varsplt else 1]
         # Replace variable title with itself in double quotes
         line = line.replace(vartitle, '"'+vartitle+'"', 1)
         # Replace equal sign with colon
         line = line.replace('=', ':', 1)
         # Add the line to fixed lines
         fixed.append(line)
-    if fixed[-2].endswith(','):
-        fixed[-2] = fixed[-2][:-1]
-    return '\n'.join(fixed)
+    # Finally, return fixed as linebroken string, fixing comma problems while we do that.
+    return '\n'.join(fixed).replace('\n"', ', "').replace(',,', ',')
 
 def unJsonify(dictionary):
     """Dump dictionary to string with json module, then pretty much undo what's done in toJsonReadable."""
@@ -204,18 +270,40 @@ def automatic_translation(data):
     print(f'\nDone translating to {lang_globs.LANGUAGES[language].title()}.')
     return trans
 
-def automated_translation(to_language_codes, forMineOs=True):
-    import asyncio
+def automated_translation(to_language_codes, from_filename, from_lang='auto', saveFiles=True, saveFilename='{}.lang', fastest=False, forMineOs=True):
+    """Automated translation of a language file. Returns massive dictionary of translated, with codes as keys. See help() for this function for more information.
+    
+    Automated translation of a language file from language from_lang
+    to all languages specified by to_language_codes.
+    
+    If saveFile is True, save the files in the folder "Translated" in the
+    current directory. Will create folder if it does not exist.
+    
+    saveFilename should be a formatable string with an extention, ex "{}.txt" or
+    "{}.json" or "{}.lang", where {} gets subsituted by the language name.
+    Again, all of these files will appear in the program's current running
+    directory in a directory labled "Translated".
+    
+    If fastest is True, run all translations asyncronously,
+    which will likely cause a aiohttp error for too many open files
+    because of the way things get translated. It can work for
+    smaller jobs though, so that's why it exists.
+    
+    If forMineOs is True, modify the from_filename read data so the
+    json module can parse it properly and we can actually do things.
+    Set it to false if you are reading plain json files.
+    """
     if not CANAUTOTRANS:
         raise RuntimeError('Requires translate and lang_globs modules. Can be found in github repository.')
     to_language_codes = list(to_language_codes)
     
     if forMineOs:
-        original = json.loads(toJsonReadable(readData(READ)))
+        original = json.loads(toJsonReadable(readData(from_filename)))
     else:
-        original = json.loads(readData(READ))
+        original = json.loads(readData(from_filename))
     
     def eval_code(code):
+        """Evaluate language code for validity."""
         if not code in lang_globs.LANGUAGES:
             if code in lang_globs.LANGCODES:
                 old = language
@@ -231,47 +319,57 @@ def automated_translation(to_language_codes, forMineOs=True):
     real_codes = []
     for language_code in to_language_codes:
         real_codes.append(eval_code(language_code))
-    if SRCLANG in real_codes:
-        del real_codes[real_codes.index(SRCLANG)]
+    if from_lang in real_codes:
+        del real_codes[real_codes.index(from_lang)]
     
     original_keys = tuple(original.keys())
     l_orig_keys = len(original_keys)
     original_sentances = [original[key] for key in original_keys]
     
     async def save_language(langcode, dictionary):
-        filename = lang_globs.LANGUAGES[langcode].title()+'.lang'
+        """Save a language data from dictionary to a file, filename based on langcode and saveFilename."""
+##        filename = lang_globs.LANGUAGES[langcode].title()+'.lang'
+        lang_name = lang_globs.LANGUAGES[langcode].title()
+        filename = saveFilename.format(lang_name)
+        if not os.path.exists('Translated/'):
+            os.mkdir('Translated')
+        filename = 'Translated/'+filename
         if forMineOs:
             writeData(filename, unJsonify(dictionary))
         else:
             writeData(filename, json.dumps(dictionary))
         print(f'Saved {langcode} to {filename}.')
     
-    async def translate_to_language(loop, langcode):
+    async def translate_to_language(loop, langcode, save=True):
+        """Translate the original file to language specified by langcode, and save is save is True."""
         print(f'Translating {langcode}...')
         trans_sent = await translate.translate_async(loop, original_sentances,
                                                      langcode, SRCLANG)
         trans_dict = {original_keys[i]:trans_sent[i] for i in range(l_orig_keys)}
 ##        return trans_dict
         print(f'Translatation to {langcode} complete.')
-        await save_language(langcode, trans_dict)
+        if save:
+            await save_language(langcode, trans_dict)
+        return langcode, trans_dict
     
-    async def translate_all_languages(loop):
-        for lc in real_codes:
-            await translate_to_language(loop, lc)
-##        coros = [translate_to_language(loop, lc) for lc in real_codes]
-##        await asyncio.gather(*coros)
+    async def translate_all_languages(loop, fastest=False, save=True):
+        """Translate original file to all languages defined by to_lang_codes. Save files if save is True."""
+        if fastest:
+            coros = [translate_to_language(loop, lc, save) for lc in real_codes]
+            results = await asyncio.gather(*coros)
+        else:
+            results = []
+            for lc in real_codes:
+                results.append(await translate_to_language(loop, lc, save))
+        results = {langcode:transdict for langcode, transdict in results}
+        return results
     
     # Get asyncronous event loop
     event_loop = asyncio.get_event_loop()
     print(f'Beginning translation to {len(real_codes)} languages...')
-    try:
-        event_loop.run_until_complete(translate_all_languages(event_loop))
-    finally:
-        # Close the event loop no matter what
-        event_loop.close()
-    del asyncio
-##    translate_all_languages()
+    results = event_loop.run_until_complete(translate_all_languages(event_loop))
     print(f'\nTranslation of {len(real_codes)} languages complete!')
+    return results
 
 def run():
     print('\nDo not run in windows powershell, or really any shell for that\nmatter. Program is prone to crash and tells you how to fix before crash.\nIdle is a much better idea.\n')
@@ -298,7 +396,9 @@ def run():
     else:
         writeData(filename, unJsonify(trans))
     
-##    automated_translation(tuple(lang_globs.LANGUAGES.keys()))
+####    automated_translation(tuple(lang_globs.LANGUAGES.keys()))
+##    langs = ['af', 'sq', 'am', 'hy', 'az', 'eu', 'be', 'bs', 'ca', 'ceb', 'ny', 'zh-cn', 'zh-tw', 'co', 'hr', 'cs', 'da', 'eo', 'et', 'tl', 'fy', 'gl', 'ka', 'el', 'gu', 'ht', 'ha', 'haw', 'he', 'hmn', 'hu', 'is', 'ig', 'id', 'ga', 'jw', 'kn', 'kk', 'km', 'ku', 'ky', 'lo', 'la', 'lv', 'lt', 'lb', 'mk', 'mg', 'ms', 'ml', 'mt', 'mi', 'mr', 'mn', 'my', 'ne', 'no', 'or', 'ps', 'fa', 'pa', 'ro', 'sm', 'gd', 'sr', 'st', 'sn', 'sd', 'si', 'sl', 'so', 'su', 'sw', 'sv', 'tg', 'ta', 'te', 'th', 'tr', 'ur', 'ug', 'uz', 'vi', 'cy', 'xh', 'yi', 'yo', 'zu']
+##    automated_translation(langs)
 
 if __name__ == '__main__':
     print('%s v%s\nProgrammed by %s.' % (__title__, __version__, __author__))

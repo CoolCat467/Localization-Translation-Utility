@@ -6,10 +6,10 @@
 
 __title__ = 'Tiny tranlator module'
 __author__ = 'CoolCat467'
-__version__ = '0.0.0'
+__version__ = '0.0.1'
 __ver_major__ = 0
 __ver_minor__ = 0
-__ver_patch__ = 0
+__ver_patch__ = 1
 
 import asyncio
 
@@ -32,9 +32,6 @@ def get_translation_url(sentance, tolanguage, fromlanguage='auto'):
              'tl'    : tolanguage,
              'q'     : sentance}
     url = 'https://clients5.google.com/translate_a/t?'+urlencode(query)
-    
-##    sentance = '%20'.join(sentance.split(' '))
-##    url = "https://clients5.google.com/translate_a/t?client=dict-chrome-ex&sl="+fromlanguage+"&tl="+tolanguage+"&q=" + sentance
     return url
 
 def translate(sentance, tolang, fromlang='auto'):
@@ -80,12 +77,8 @@ def translate_sentances(sentances, tolang, fromlang='auto'):
     """Translate many sentances at once using the power of asyncronous code."""
     # Get asyncronous event loop
     event_loop = asyncio.get_event_loop()
-    try:
-        # Run the main function until it's done and get our translated sentances
-        data = event_loop.run_until_complete(translate_async(event_loop, sentances, tolang, fromlang))
-    finally:
-        # Close the event loop no matter what
-        event_loop.close()
+    # Run the main function until it's done and get our translated sentances
+    data = event_loop.run_until_complete(translate_async(event_loop, sentances, tolang, fromlang))
     # Return translated sentances
     return data
 
@@ -127,7 +120,6 @@ def run():
         print(translate_sentances(sentances, dstlang, srclang))
     # Translate the sentances with both to prove asyncronous is better woo
     without_async()
-    with_async()
     with_async()
     
     # Destroy the evidence!
