@@ -2,14 +2,8 @@
 # Localization Translator Helper.
 # -*- coding: utf-8 -*-
 
-# Semi-compadable with Google Translate.
+# Semi-compadable with Google Translate using copy-paste nonsense.
 # When "translate" module present, completely compatable.
-
-# Can use input from other files by changing the filename of
-# the variable READ below.
-
-READ = 'English.lang'
-SRCLANG = 'en'
 
 # For Lolcat, https://funtranslations.com/lolcat is known to work, "good" translator.
 
@@ -30,14 +24,13 @@ else:
 
 __title__ = 'Localization Translator Helper'
 __author__ = 'CoolCat467'
-__version__ = '2.0.0'
+__version__ = '2.1.0'
 __ver_major__ = 2
 __ver_minor__ = 1
 __ver_patch__ = 0
 
 def readData(filename):
     """Open filename and return data."""
-    data = None
     with open(filename, mode='r') as readfile:
         data = readfile.read()
         readfile.close()
@@ -48,40 +41,6 @@ def writeData(filename, data):
     with open(filename, mode='w', encoding='utf-8') as writefile:
         writefile.write(data)
         writefile.close()
-
-def infIntGen(start=0, change=1):
-    """Generate infinite intigers starting with <start> and incrementing by <change>."""
-    n = int(start)
-    c = int(change)
-    while True:
-        yield n
-        n += c
-
-##def toJsonReadable(data):
-##    """Read the contents of file data <data> and fix variable names so json module can read it as json."""
-##    fixed = []
-##    lines = data.splitlines()
-##    for lidx in range(len(lines)):
-##        line = lines[lidx]
-##        cidx = line.find('=')
-##        cidx = cidx if cidx != -1 else 0
-##        # cidx is now pointing to equal sign in line after var name
-##        search = line[:cidx]
-##        # Skip invalid lines that end up saying nothing
-##        if not search:
-##            fixed.append(line)
-##            continue
-##        # Get variable title
-##        vartitle = search.split()[0]
-##        # Replace variable title with itself in double quotes
-##        line = line.replace(vartitle, '"'+vartitle+'"', 1)
-##        # Replace equal sign with colon
-##        line = line.replace('=', ':', 1)
-##        # Add the line to fixed lines
-##        fixed.append(line)
-##    if fixed[-2].endswith(','):
-##        fixed[-2] = fixed[-2][:-1]
-##    return '\n'.join(fixed)
 
 def toJsonReadable(data):
     """Read the contents of file data <data> and fix variable names so json module can read it as json."""
@@ -147,28 +106,36 @@ def toJsonReadable(data):
     # Finally, return fixed as linebroken string, fixing comma problems while we do that.
     return '\n'.join(fixed).replace('\n"', ', "').replace(',,', ',')
 
-def unJsonify(dictionary):
-    """Dump dictionary to string with json module, then pretty much undo what's done in toJsonReadable."""
+def partQuotes(text, which, quotes="'"):
+    """Return part which of text within quotes."""
+    return text.split(quotes)[which*2+1]
+
+def unJsonify(dictionary, indent='\t', modifyNames=True):
+    """Dump dictionary to string with json module, then pretty much undo what's done in toJsonReadable if modifyNames is True."""
     # Specify how file format should be
-    data = json.dumps(dictionary, ensure_ascii=False, separators=(',\n\t', ' = '))
-    # Fix start and end
-    data = '{\n\t'+data[1:-1]+'\n}'
-    # Fix variable names
-    fixed = []
-    for line in data.splitlines():
-        if ' = ' in line:
-            namestop = line.index(' = ')
-            line = '\t'+line[2:namestop-1]+line[namestop:]
-        fixed.append(line)
-    return '\n'.join(fixed)
+    separators = (',', ' = ' if modifyNames else ': ')
+    data = json.dumps(dictionary, ensure_ascii=False,
+                      separators=separators,
+                      indent=indent)
+    if modifyNames:
+        # Change variable names to not be in quotes.
+        fixed = []
+        for line in data.splitlines():
+            if ' = ' in line:
+                namestop = line.index(' = ')
+                line = indent+partQuotes(line, 0, '"')+line[namestop:]
+            fixed.append(line)
+        return '\n'.join(fixed)
+    return data
 
 def copy_paste_translation(data):
     """Convert dictionary into string with numbers and special markers, then take copy-paste output back and undo that so it's a dictionary again and return that."""
     # Make conversion dictionarys for between key and numbers and backwards
     # Create number to key dict with infinite number gen zipped with keys
-    numToKey = {i:k for i, k in zip(infIntGen(), list(data.keys()))}
+    keys = list(data.keys())
+    numToKey = {i:keys[i] for i in range(len(keys))}
     # Make a reverse of that for keys to numbers
-    keyToNum = {numToKey[k]:k for k in numToKey}
+    keyToNum = dict(map(reversed, numToKey.items()))
     # Generate data to paste in translator
     toPaste = ''
     # For all the keys in our data,
@@ -222,9 +189,8 @@ def copy_paste_translation(data):
         trans[numToKey[int(num)]] = value
     return trans
 
-def automatic_translation(data):
+def automatic_translation(data, from_lang='auto'):
     """Use the power of awesome google translate module cool guy made and translate stuff automatially for free!"""
-    trans = {}
     language = input('Language code to translate to: (ex. "en", "zh-cn", "ru") : ')
     
     if not language in lang_globs.LANGUAGES:
@@ -235,42 +201,16 @@ def automatic_translation(data):
         else:
             print(f'\nLanguage code "{language}" not found in known language codes. Unexpected results may occour shorly.')
             input('Press Enter to Continue. ')
-##    #pip3 install googletrans
-##    itemCount = int(input('Number of lines to translate at once: '))
-##    
-##    ungroupedKeys = list(data.keys())
-##    keyGroups = []
-##    for i in range((len(ungroupedKeys) // itemCount) + 1):
-##        topop = min(len(ungroupedKeys), itemCount)
-##        if topop > 0:
-##            keyGroups.append([ungroupedKeys.pop() for ii in range(topop)])
-##    
-##    translator = Translator()
-##    
-##    for keyGroup in keyGroups:
-##        items = [data[key] for key in keyGroup]
-##        translations = translator.translate(items, dest=language, src=SRCLANG)
-##        for translation, key in zip(translations, keyGroup):
-##            trans[key] = translation.text
-##    if hasattr(translate, 'translate_sentances'):
+    
     print('Translating sentances asyncronously...')
     keys = tuple(data.keys())
-    values = translate.translate_sentances([data[key] for key in keys], language, SRCLANG)
-    for key, value in zip(keys, values):
-        trans[key] = value
-##    else:
-##        keys = tuple(data.keys())
-##        lkeys = len(keys)
-##        for kidx in range(lkeys):
-##            key = keys[kidx]
-##            trans[key] = translate.translate(data[key], language, SRCLANG)
-##    ##        print(f'"{data[key]}" --> "{trans[key]}" ({kidx+1}/{lkeys})')
-##            print(f'{kidx+1} / {lkeys} complete')
+    values = translate.translate_sentances([data[key] for key in keys], language, from_lang)
+    trans = dict(zip(keys, values))
     
     print(f'\nDone translating to {lang_globs.LANGUAGES[language].title()}.')
     return trans
 
-def automated_translation(to_language_codes, from_filename, from_lang='auto', saveFiles=True, saveFilename='{}.lang', fastest=False, forMineOs=True):
+def automated_translation(to_language_codes, from_filename, from_lang='auto', saveFiles=True, saveFilename='{}.lang', fastest=False, forMineOs=True, doPrint=True):
     """Automated translation of a language file. Returns massive dictionary of translated, with codes as keys. See help() for this function for more information.
     
     Automated translation of a language file from language from_lang
@@ -295,12 +235,17 @@ def automated_translation(to_language_codes, from_filename, from_lang='auto', sa
     """
     if not CANAUTOTRANS:
         raise RuntimeError('Requires translate and lang_globs modules. Can be found in github repository.')
+    if doPrint:
+        pront = lambda x: print(x)
+    else:
+        pront = lambda x: None
+    
     to_language_codes = list(to_language_codes)
     
+    fileData = readData(from_filename)
     if forMineOs:
-        original = json.loads(toJsonReadable(readData(from_filename)))
-    else:
-        original = json.loads(readData(from_filename))
+        fileData = toJsonReadable(fileData)
+    original = json.loads(fileData)
     
     def eval_code(code):
         """Evaluate language code for validity."""
@@ -308,12 +253,13 @@ def automated_translation(to_language_codes, from_filename, from_lang='auto', sa
             if code in lang_globs.LANGCODES:
                 old = language
                 code = lang_globs.LANGCODES[code]
-                print(f'\nLanguage code "{old}" was not found, but it appears to corrospond with language code "{code}"!')
-            else:
+                pront(f'\nLanguage code "{old}" was not found, but it appears to corrospond with language code "{code}"!')
+            elif doPrint:
                 print(f'\nLanguage code "{code}" not found in known language codes.')
                 if input('Would you like to replace its value? (y/N) ').lower() in ('y', 'yes'):
                     return eval_code(input('Replacement value: '))
-                # In the event of no, leave it as is. Maybe language codes database is not complete.
+                # In the event of no, leave it as is. Maybe language codes
+                # database is not complete.
         return code
     
     real_codes = []
@@ -328,7 +274,6 @@ def automated_translation(to_language_codes, from_filename, from_lang='auto', sa
     
     async def save_language(langcode, dictionary):
         """Save a language data from dictionary to a file, filename based on langcode and saveFilename."""
-##        filename = lang_globs.LANGUAGES[langcode].title()+'.lang'
         lang_name = lang_globs.LANGUAGES[langcode].title()
         filename = saveFilename.format(lang_name)
         if not os.path.exists('Translated/'):
@@ -337,17 +282,16 @@ def automated_translation(to_language_codes, from_filename, from_lang='auto', sa
         if forMineOs:
             writeData(filename, unJsonify(dictionary))
         else:
-            writeData(filename, json.dumps(dictionary))
+            writeData(filename, json.dumps(dictionary, ensure_ascii=False))
         print(f'Saved {langcode} to {filename}.')
     
     async def translate_to_language(loop, langcode, save=True):
         """Translate the original file to language specified by langcode, and save is save is True."""
-        print(f'Translating {langcode}...')
+        pront(f'Translating {langcode}...')
         trans_sent = await translate.translate_async(loop, original_sentances,
-                                                     langcode, SRCLANG)
+                                                     langcode, from_lang)
         trans_dict = {original_keys[i]:trans_sent[i] for i in range(l_orig_keys)}
-##        return trans_dict
-        print(f'Translatation to {langcode} complete.')
+        pront(f'Translatation to {langcode} complete.')
         if save:
             await save_language(langcode, trans_dict)
         return langcode, trans_dict
@@ -366,40 +310,78 @@ def automated_translation(to_language_codes, from_filename, from_lang='auto', sa
     
     # Get asyncronous event loop
     event_loop = asyncio.get_event_loop()
-    print(f'Beginning translation to {len(real_codes)} languages...')
+    pront(f'Beginning translation to {len(real_codes)} languages...')
     results = event_loop.run_until_complete(translate_all_languages(event_loop))
-    print(f'\nTranslation of {len(real_codes)} languages complete!')
+    pront(f'\nTranslation of {len(real_codes)} languages complete!')
     return results
+
+def terminate():
+    """Gracefully quit the program after user presses return key."""
+    input('\nPress RETURN to continue. ')
+    os.sys.exit()
+    exit()
+    os.abort()
 
 def run():
     print('\nDo not run in windows powershell, or really any shell for that\nmatter. Program is prone to crash and tells you how to fix before crash.\nIdle is a much better idea.\n')
     
-    notMineos = False
-    if input('Is input lang file for MineOS? (Y/n) ').lower() in ('n', 'no'):
-        data = json.loads(readData(READ))
-        notMineos = True
-    else:
-        data = json.loads(toJsonReadable(readData(READ)))
+    loadFilename = input('Filename to load: ')
     
-    if CANAUTOTRANS and input(f'Would you like to auto-translate the {READ.split(".")[0]} to specified with google translate? (y/N) : ').lower() in ('y', 'yes'):
-        trans = automatic_translation(data)
-    else:
-        trans = copy_paste_translation(data)
+    try:
+        fileext = '.'+loadFilename.split('.')[-1]
+        fileData = readData(loadFilename)
+    except Exception as ex:
+        print(f'\nA {type(ex).__name__} Error Has Occored: {", ".join(map(str, ex.args))}')
+        print('Error: Invalid filename.')
+        return terminate()
+    
+    mineos = input('Is input lang file for MineOS? (y/N) ').lower() in ('y', 'yes')
+    
+    if mineos:
+        fileData = toJsonReadable(fileData)
+    try:
+        data = json.loads(fileData)
+    except Exception as ex:
+        print(f'\nA {type(ex).__name__} Error Has Occored: {", ".join(map(str, ex.args))}')
+        print('Error: Invalid file data.')
+        return terminate()
+    
+    try:
+        if CANAUTOTRANS and not input(f'Would you like to auto-translate with google translate? (Y/n) : ').lower() in ('n', 'no'):
+            trans = automatic_translation(data)
+        else:
+            trans = copy_paste_translation(data)
+    except Exception as ex:
+        print(f'\nA {type(ex).__name__} Error Has Occored: {", ".join(map(str, ex.args))}')
+        print('Error: Invalid translation response.')
+        return terminate()
+    
+    try:
+        indent = fileData[fileData.index('\n')+1:fileData.index('"')]
+    except Exception:
+        indent = '\t'
+    print(f'\nAssummed file indentation: "{indent}"')
+    if input('Change to a different value? (y/N) : ').lower() in ('y', 'yes'):
+        indent = input('New indent: ').replace('\\t', '\t').replace('\\n', '\n')
     
     # Get language name from user
-    lang = input('\nLanguage save name: ')
-    # Save file is language string + '.lang'
-    filename = lang+'.lang'
+    lang = input('\nNew language filename (no extention): ')
+    # Save file is language string + the extention used in the loaded file.
+    saveFilename = lang+fileext
     
-    if notMineos:
-        writeData(filename, json.dumps(trans))
+    try:
+        writeData(saveFilename, unJsonify(trans, indent, mineos))
+    except Exception as ex:
+        print(f'\nA {type(ex).__name__} Error Has Occored: {", ".join(map(str, ex.args))}')
+        print('Error: Could not save file.')
+        return terminate()
     else:
-        writeData(filename, unJsonify(trans))
-    
-####    automated_translation(tuple(lang_globs.LANGUAGES.keys()))
-##    langs = ['af', 'sq', 'am', 'hy', 'az', 'eu', 'be', 'bs', 'ca', 'ceb', 'ny', 'zh-cn', 'zh-tw', 'co', 'hr', 'cs', 'da', 'eo', 'et', 'tl', 'fy', 'gl', 'ka', 'el', 'gu', 'ht', 'ha', 'haw', 'he', 'hmn', 'hu', 'is', 'ig', 'id', 'ga', 'jw', 'kn', 'kk', 'km', 'ku', 'ky', 'lo', 'la', 'lv', 'lt', 'lb', 'mk', 'mg', 'ms', 'ml', 'mt', 'mi', 'mr', 'mn', 'my', 'ne', 'no', 'or', 'ps', 'fa', 'pa', 'ro', 'sm', 'gd', 'sr', 'st', 'sn', 'sd', 'si', 'sl', 'so', 'su', 'sw', 'sv', 'tg', 'ta', 'te', 'th', 'tr', 'ur', 'ug', 'uz', 'vi', 'cy', 'xh', 'yi', 'yo', 'zu']
-##    automated_translation(langs)
+        print(f'\nSuccessfully saved as "{saveFilename}" in "{os.getcwd()}".')
+    return terminate()
 
 if __name__ == '__main__':
     print('%s v%s\nProgrammed by %s.' % (__title__, __version__, __author__))
     run()
+####    automated_translation(tuple(lang_globs.LANGUAGES.keys()))
+##    langs = ['af', 'sq', 'am', 'hy', 'az', 'eu', 'be', 'bs', 'ca', 'ceb', 'ny', 'zh-cn', 'zh-tw', 'co', 'hr', 'cs', 'da', 'eo', 'et', 'tl', 'fy', 'gl', 'ka', 'el', 'gu', 'ht', 'ha', 'haw', 'he', 'hmn', 'hu', 'is', 'ig', 'id', 'ga', 'jw', 'kn', 'kk', 'km', 'ku', 'ky', 'lo', 'la', 'lv', 'lt', 'lb', 'mk', 'mg', 'ms', 'ml', 'mt', 'mi', 'mr', 'mn', 'my', 'ne', 'no', 'or', 'ps', 'fa', 'pa', 'ro', 'sm', 'gd', 'sr', 'st', 'sn', 'sd', 'si', 'sl', 'so', 'su', 'sw', 'sv', 'tg', 'ta', 'te', 'th', 'tr', 'ur', 'ug', 'uz', 'vi', 'cy', 'xh', 'yi', 'yo', 'zu']
+##    automated_translation(langs)
