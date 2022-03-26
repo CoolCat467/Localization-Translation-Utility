@@ -67,7 +67,7 @@ LANGUAGES = {
     'mk': 'macedonian',
     'mg': 'malagasy',
     'ms': 'malay',
-    'ml': 'malayalam',
+    'ml': 'malayalan',
     'mt': 'maltese',
     'mi': 'maori',
     'mr': 'marathi',

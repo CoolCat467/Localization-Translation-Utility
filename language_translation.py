@@ -13,37 +13,37 @@ import os
 import asyncio
 import json
 
-CANAUTOTRANS = False
+CAN_AUTO_TRANS = False
 try:
     import translate
     import lang_globs
 except ImportError:
     pass
 else:
-    CANAUTOTRANS = True
+    CAN_AUTO_TRANS = True
 
 __title__ = 'Localization Translator Helper'
 __author__ = 'CoolCat467'
-__version__ = '2.1.0'
+__version__ = '2.2.0'
 __ver_major__ = 2
-__ver_minor__ = 1
+__ver_minor__ = 2
 __ver_patch__ = 0
 
-def readData(filename):
-    """Open filename and return data."""
+def read_file(filename):
+    "Open filename and return data."
     with open(filename, mode='r') as readfile:
         data = readfile.read()
         readfile.close()
     return data
 
-def writeData(filename, data):
-    """Save <data> to <filename>."""
+def write_file(filename, data):
+    "Save <data> to <filename>."
     with open(filename, mode='w', encoding='utf-8') as writefile:
         writefile.write(data)
         writefile.close()
 
-def toJsonReadable(data):
-    """Read the contents of file data <data> and fix variable names so json module can read it as json."""
+def fix_json(data):
+    "Read the contents of file data <data> and fix variable names so json module can read it as json."
     fixed = []
     # Lines is all the lines, seperated by splitlines,
     # while making tiny chuncks seperate lines so vartitle fix happens,
@@ -106,12 +106,12 @@ def toJsonReadable(data):
     # Finally, return fixed as linebroken string, fixing comma problems while we do that.
     return '\n'.join(fixed).replace('\n"', ', "').replace(',,', ',')
 
-def partQuotes(text, which, quotes="'"):
-    """Return part which of text within quotes."""
+def part_quotes(text, which, quotes="'"):
+    "Return part which of text within quotes."
     return text.split(quotes)[which*2+1]
 
-def unJsonify(dictionary, indent='\t', modifyNames=True):
-    """Dump dictionary to string with json module, then pretty much undo what's done in toJsonReadable if modifyNames is True."""
+def break_json(dictionary, indent='\t', modifyNames=True):
+    "Dump dictionary to string with json module, then pretty much undo what's done in fix_json if modifyNames is True."
     # Specify how file format should be
     separators = (',', ' = ' if modifyNames else ': ')
     data = json.dumps(dictionary, ensure_ascii=False,
@@ -123,43 +123,43 @@ def unJsonify(dictionary, indent='\t', modifyNames=True):
         for line in data.splitlines():
             if ' = ' in line:
                 namestop = line.index(' = ')
-                line = indent+partQuotes(line, 0, '"')+line[namestop:]
+                line = indent+part_quotes(line, 0, '"')+line[namestop:]
             fixed.append(line)
         return '\n'.join(fixed)
     return data
 
 def copy_paste_translation(data):
-    """Convert dictionary into string with numbers and special markers, then take copy-paste output back and undo that so it's a dictionary again and return that."""
+    "Convert dictionary into string with numbers and special markers, then take copy-paste output back and undo that so it's a dictionary again and return that."
     # Make conversion dictionarys for between key and numbers and backwards
     # Create number to key dict with infinite number gen zipped with keys
     keys = list(data.keys())
-    numToKey = {i:keys[i] for i in range(len(keys))}
+    key_dict = {idx:val for idx, val in enumerate(keys)}
     # Make a reverse of that for keys to numbers
-    keyToNum = dict(map(reversed, numToKey.items()))
+    rev_key_dict = dict(map(reversed, key_dict.items()))
     # Generate data to paste in translator
-    toPaste = ''
+    to_paste = ''
     # For all the keys in our data,
     for key in data:
         # Get the number that corelates with that key
-        num = keyToNum[key]
-        # Add '#<key number>*<value>' to toPaste data
-        toPaste += ('#%i*' % num) + data[key].replace('\n', '_n_')
+        num = rev_key_dict[key]
+        # Add '#<key number>*<value>' to to_paste data
+        to_paste += ('#%i*' % num) + data[key].replace('\n', '_n_')
     # Print for user and get translated back
     print('Copy-paste the following into some sort of translator (text within single quotes):')
-    print("'"+toPaste+"'")
+    print("'"+to_paste+"'")
     # Get translated back from user
     copied = input('Enter translated result: ')
     # If it's google translate, we need to fix data
-    isbad = not input('Is translator nice? (output is not split by spaces)(y/N) : ').lower() in ('y', 'yes')
+    is_bad = not input('Is translator nice? (output is not split by spaces)(y/N) : ').lower() in ('y', 'yes')
     # If used bad (like google translate and it added spaces), fix it
-    if isbad:
+    if is_bad:
         # Fix weirdness google translate adds to our fine data
-        hashfx = copied.replace(' # ', '#')
-        hashfx2 = hashfx.replace('# ', '#')
-        hashfx3 = hashfx2.replace(' #', '#')
-        starfx = hashfx3.replace(' * ', '*')
-        hashfx4 = starfx.replace('#\u200b\u200b', '#')
-        copied = hashfx4        
+        fix = copied.replace(' # ', '#')
+        fix = fix.replace('# ', '#')
+        fix = fix.replace(' #', '#')
+        fix = fix.replace(' * ', '*')
+        fix = fix.replace('#\u200b\u200b', '#')
+        copied = fix
         print('In some cases, may be so evil user has to help. Warning.')
         print('Printing lines so you can fix parsing problems.')
     # Decode translated data back into usable dictionary
@@ -176,21 +176,21 @@ def copy_paste_translation(data):
         if split == ['']:
             continue
         # If we are using google translate, print the line in case of errors
-        if isbad:
+        if is_bad:
             print(line)
         # If there is invalid split data, tell user and prepare for crash :(
         if len(split) != 2:
             print('An error is about to occor very likely.')
-            print('Line data: "%s"' % line)
-            print('Seperated Data: %r' % split)
+            print(f'Line data: "{line}"')
+            print(f'Seperated Data: {split}')
         # Get number and value from split data
         num, value = split
         # Add data to translated dictionary and convert key number back to real key.
-        trans[numToKey[int(num)]] = value
+        trans[key_dict[int(num)]] = value
     return trans
 
 def automatic_translation(data, from_lang='auto'):
-    """Use the power of awesome google translate module cool guy made and translate stuff automatially for free!"""
+    "Use the power of awesome google translate module cool guy made and translate stuff automatially for free!"
     language = input('Language code to translate to: (ex. "en", "zh-cn", "ru") : ')
     
     if not language in lang_globs.LANGUAGES:
@@ -210,7 +210,7 @@ def automatic_translation(data, from_lang='auto'):
     print(f'\nDone translating to {lang_globs.LANGUAGES[language].title()}.')
     return trans
 
-def automated_translation(to_language_codes, from_filename, from_lang='auto', saveFiles=True, saveFilename='{}.lang', fastest=False, forMineOs=True, doPrint=True):
+def automated_translation(to_language_codes, from_filename, from_lang='auto', saveFiles=True, saveFilename='{}.lang', fastest=False, for_mineos=True, doPrint=True):
     """Automated translation of a language file. Returns massive dictionary of translated, with codes as keys. See help() for this function for more information.
     
     Automated translation of a language file from language from_lang
@@ -229,11 +229,11 @@ def automated_translation(to_language_codes, from_filename, from_lang='auto', sa
     because of the way things get translated. It can work for
     smaller jobs though, so that's why it exists.
     
-    If forMineOs is True, modify the from_filename read data so the
+    If for_mineos is True, modify the from_filename read data so the
     json module can parse it properly and we can actually do things.
     Set it to false if you are reading plain json files.
     """
-    if not CANAUTOTRANS:
+    if not CAN_AUTO_TRANS:
         raise RuntimeError('Requires translate and lang_globs modules. Can be found in github repository.')
     if doPrint:
         pront = lambda x: print(x)
@@ -242,16 +242,24 @@ def automated_translation(to_language_codes, from_filename, from_lang='auto', sa
     
     to_language_codes = list(to_language_codes)
     
-    fileData = readData(from_filename)
-    if forMineOs:
-        fileData = toJsonReadable(fileData)
-    original = json.loads(fileData)
+    file_data = read_file(from_filename)
+    if for_mineos:
+        file_data = fix_json(file_data)
+    original = json.loads(file_data)
+    
+    try:
+        indent = file_data[file_data.index('\n')+1:file_data.index('"')]
+    except Exception:
+        indent = '\t'
+    print(f'\nAssummed file indentation: "{indent}"')
+    if input('Change to a different value? (y/N) : ').lower() in ('y', 'yes'):
+        indent = input('New indent: ').replace('\\t', '\t').replace('\\n', '\n')
     
     def eval_code(code):
-        """Evaluate language code for validity."""
+        "Evaluate language code for validity."
         if not code in lang_globs.LANGUAGES:
             if code in lang_globs.LANGCODES:
-                old = language
+                old = code
                 code = lang_globs.LANGCODES[code]
                 pront(f'\nLanguage code "{old}" was not found, but it appears to corrospond with language code "{code}"!')
             elif doPrint:
@@ -273,20 +281,18 @@ def automated_translation(to_language_codes, from_filename, from_lang='auto', sa
     original_sentances = [original[key] for key in original_keys]
     
     async def save_language(langcode, dictionary):
-        """Save a language data from dictionary to a file, filename based on langcode and saveFilename."""
-        lang_name = lang_globs.LANGUAGES[langcode].title()
-        filename = saveFilename.format(lang_name)
+        "Save a language data from dictionary to a file, filename based on langcode and saveFilename."
+##        lang_name = lang_globs.LANGUAGES[langcode].title()
+##        filename = saveFilename.format(lang_name)
+        filename = saveFilename.format(langcode)
         if not os.path.exists('Translated/'):
             os.mkdir('Translated')
         filename = 'Translated/'+filename
-        if forMineOs:
-            writeData(filename, unJsonify(dictionary))
-        else:
-            writeData(filename, json.dumps(dictionary, ensure_ascii=False))
+        write_file(filename, break_json(dictionary, indent, for_mineos))
         print(f'Saved {langcode} to {filename}.')
     
     async def translate_to_language(loop, langcode, save=True):
-        """Translate the original file to language specified by langcode, and save is save is True."""
+        "Translate the original file to language specified by langcode, and save is save is True."
         pront(f'Translating {langcode}...')
         trans_sent = await translate.translate_async(loop, original_sentances,
                                                      langcode, from_lang)
@@ -297,7 +303,7 @@ def automated_translation(to_language_codes, from_filename, from_lang='auto', sa
         return langcode, trans_dict
     
     async def translate_all_languages(loop, fastest=False, save=True):
-        """Translate original file to all languages defined by to_lang_codes. Save files if save is True."""
+        "Translate original file to all languages defined by to_lang_codes. Save files if save is True."
         if fastest:
             coros = [translate_to_language(loop, lc, save) for lc in real_codes]
             results = await asyncio.gather(*coros)
@@ -305,18 +311,18 @@ def automated_translation(to_language_codes, from_filename, from_lang='auto', sa
             results = []
             for lc in real_codes:
                 results.append(await translate_to_language(loop, lc, save))
-        results = {langcode:transdict for langcode, transdict in results}
-        return results
+        return dict(results)
     
     # Get asyncronous event loop
-    event_loop = asyncio.get_event_loop()
+    event_loop = asyncio.new_event_loop()
     pront(f'Beginning translation to {len(real_codes)} languages...')
     results = event_loop.run_until_complete(translate_all_languages(event_loop))
+    event_loop.close()
     pront(f'\nTranslation of {len(real_codes)} languages complete!')
     return results
 
 def terminate():
-    """Gracefully quit the program after user presses return key."""
+    "Gracefully quit the program after user presses return key."
     input('\nPress RETURN to continue. ')
     os.sys.exit()
     exit()
@@ -325,11 +331,11 @@ def terminate():
 def run():
     print('\nDo not run in windows powershell, or really any shell for that\nmatter. Program is prone to crash and tells you how to fix before crash.\nIdle is a much better idea.\n')
     
-    loadFilename = input('Filename to load: ')
+    load_filename = input('Filename to load: ')
     
     try:
-        fileext = '.'+loadFilename.split('.')[-1]
-        fileData = readData(loadFilename)
+        file_ext = '.'+load_filename.split('.')[-1]
+        file_data = read_file(load_filename)
     except Exception as ex:
         print(f'\nA {type(ex).__name__} Error Has Occored: {", ".join(map(str, ex.args))}')
         print('Error: Invalid filename.')
@@ -338,16 +344,16 @@ def run():
     mineos = input('Is input lang file for MineOS? (y/N) ').lower() in ('y', 'yes')
     
     if mineos:
-        fileData = toJsonReadable(fileData)
+        file_data = fix_json(file_data)
     try:
-        data = json.loads(fileData)
+        data = json.loads(file_data)
     except Exception as ex:
         print(f'\nA {type(ex).__name__} Error Has Occored: {", ".join(map(str, ex.args))}')
         print('Error: Invalid file data.')
         return terminate()
     
     try:
-        if CANAUTOTRANS and not input(f'Would you like to auto-translate with google translate? (Y/n) : ').lower() in ('n', 'no'):
+        if CAN_AUTO_TRANS and not input(f'Would you like to auto-translate with google translate? (Y/n) : ').lower() in ('n', 'no'):
             trans = automatic_translation(data)
         else:
             trans = copy_paste_translation(data)
@@ -357,7 +363,7 @@ def run():
         return terminate()
     
     try:
-        indent = fileData[fileData.index('\n')+1:fileData.index('"')]
+        indent = file_data[file_data.index('\n')+1:file_data.index('"')]
     except Exception:
         indent = '\t'
     print(f'\nAssummed file indentation: "{indent}"')
@@ -367,10 +373,10 @@ def run():
     # Get language name from user
     lang = input('\nNew language filename (no extention): ')
     # Save file is language string + the extention used in the loaded file.
-    saveFilename = lang+fileext
+    saveFilename = lang+file_ext
     
     try:
-        writeData(saveFilename, unJsonify(trans, indent, mineos))
+        write_file(saveFilename, break_json(trans, indent, mineos))
     except Exception as ex:
         print(f'\nA {type(ex).__name__} Error Has Occored: {", ".join(map(str, ex.args))}')
         print('Error: Could not save file.')
@@ -380,7 +386,7 @@ def run():
     return terminate()
 
 if __name__ == '__main__':
-    print('%s v%s\nProgrammed by %s.' % (__title__, __version__, __author__))
+    print(f'{__title__} v{__version__}\nProgrammed by {__author__}.')
     run()
 ####    automated_translation(tuple(lang_globs.LANGUAGES.keys()))
 ##    langs = ['af', 'sq', 'am', 'hy', 'az', 'eu', 'be', 'bs', 'ca', 'ceb', 'ny', 'zh-cn', 'zh-tw', 'co', 'hr', 'cs', 'da', 'eo', 'et', 'tl', 'fy', 'gl', 'ka', 'el', 'gu', 'ht', 'ha', 'haw', 'he', 'hmn', 'hu', 'is', 'ig', 'id', 'ga', 'jw', 'kn', 'kk', 'km', 'ku', 'ky', 'lo', 'la', 'lv', 'lt', 'lb', 'mk', 'mg', 'ms', 'ml', 'mt', 'mi', 'mr', 'mn', 'my', 'ne', 'no', 'or', 'ps', 'fa', 'pa', 'ro', 'sm', 'gd', 'sr', 'st', 'sn', 'sd', 'si', 'sl', 'so', 'su', 'sw', 'sv', 'tg', 'ta', 'te', 'th', 'tr', 'ur', 'ug', 'uz', 'vi', 'cy', 'xh', 'yi', 'yo', 'zu']
