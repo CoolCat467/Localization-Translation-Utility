@@ -15,8 +15,9 @@ __ver_patch__ = 0
 
 import asyncio
 from urllib.parse import urlencode
-from typing import Final, Any, Callable
+from typing import Final, Any, Callable, Optional
 
+# typecheck: note: See https://mypy.readthedocs.io/en/stable/running_mypy.html#missing-imports
 import requests
 import aiohttp
 import async_timeout
@@ -96,8 +97,6 @@ def translate_sentances(sentances: list, to_lang: str, source_lang: str='auto') 
 
 def run() -> None:
     "Demonstrate code usage and the power of asynchronous code."
-    if input('\nWould you like a demonstration of the translate module? (y/N) : ').lower() != 'y':
-        return
     print('\nHello. Welcome to the translation demo.')
     
     # Quick make a nice little function stopwatch wrapper
@@ -105,7 +104,7 @@ def run() -> None:
     import time
     from functools import wraps
     
-    def timed(func) -> Callable[[Callable[[Any], Any]], Any]:
+    def timed(func) -> Callable[..., Any]:
         @wraps(func)
         def time_func(*args, **kwargs) -> Any:
             start = time.perf_counter()
@@ -140,6 +139,10 @@ def run() -> None:
     def with_async() -> None:
         print('\n'.join(translate_sentances(sentances, dst_lang, src_lang)))
     # Translate the sentances with both to prove asyncronous is better woo
+    
+    if input('\nWould you like a demonstration of the translate module? (y/N) : ').lower() != 'y':
+        return
+    
     without_async()
     with_async()
 

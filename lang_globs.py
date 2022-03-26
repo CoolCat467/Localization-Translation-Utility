@@ -2,6 +2,8 @@
 # Language globals
 # -*- coding: utf-8 -*-
 
+"Language Globals"
+
 # Stolen from https://github.com/ssut/py-googletrans/blob/master/googletrans/constants.py
 
 LANGUAGES = {
@@ -114,4 +116,4 @@ LANGUAGES = {
     'zu': 'zulu',
 }
 
-LANGCODES = dict(map(reversed, LANGUAGES.items()))
+LANGCODES = dict(reversed(items) for items in LANGUAGES.items())
