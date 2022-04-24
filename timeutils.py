@@ -1,19 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# TITLE DISCRIPTION
+# TimeUtils
 
-"Docstring"
+"Utilities for Time"
 
 # Programmed by CoolCat467
 
-__title__ = 'TITLE'
+__title__ = 'Time Utils'
 __author__ = 'CoolCat467'
 __version__ = '0.0.0'
 __ver_major__ = 0
 __ver_minor__ = 0
 __ver_patch__ = 0
-
-
 
 def split_time(seconds: int) -> list:
     "Split time into decades, years, months, weeks, days, hours, minutes, and seconds."
@@ -78,10 +76,6 @@ def format_time(seconds: int, single_title_allowed: bool=False) -> str:
 
 def run():
     pass
-
-
-
-
 
 if __name__ == '__main__':
     print(f'{__title__} v{__version__}\nProgrammed by {__author__}.')
