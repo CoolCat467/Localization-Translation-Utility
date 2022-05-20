@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# TITLE DISCRIPTION
+# Auto Translate localizations for MineOS
 
-"Docstring"
+"Auto Translate localizations for MineOS"
 
 # Programmed by CoolCat467
 
-__title__ = 'TITLE'
+__title__ = 'Auto_Trans'
 __author__ = 'CoolCat467'
-__version__ = '0.0.0'
-__ver_major__ = 0
+__version__ = '1.0.0'
+__ver_major__ = 1
 __ver_minor__ = 0
 __ver_patch__ = 0
 
@@ -18,6 +18,7 @@ import asyncio
 import json
 import base64
 import time
+import copy
 
 import aiohttp
 
@@ -101,6 +102,7 @@ everything after the final slash.  Either part may be empty."""
     return '/'.join(path[:-1]), path[-1]
 
 def section_to_walk(section: list) -> tuple:
+    "Return folder and files from section"
     dirs = {}
     for full_path in section:
         path, filename = split(full_path)
@@ -164,7 +166,8 @@ async def async_run(loop):
                                      ) as session:
         print('\nGettting files...')
         files, file_comments = await download_lang('Installer/Files.cfg', cache_folder, session)
-        orig_files = files.copy()
+        # Get true copy
+        orig_files = copy.deepcopy(files)
         search = []
         for section, data in files.items():
             for entry in data:
@@ -174,6 +177,16 @@ async def async_run(loop):
                     search.append(section)
                     break
         print(f'\nSections with .lang files: {", ".join(search)}\n')
+        
+##        all_handled = {'english', 'russian', 'chinese', 'polish', 'belarusian',
+##                       'finnish', 'bulgarian', 'italian', 'bengali', 'ukrainian',
+##                       'hindi', 'french', 'japanese', 'arabic', 'slovak', 'korean',
+##                       'portuguese', 'german', 'spanish', 'dutch'}
+##        lc = languages.LANGCODES
+##        lc['chinese'] = 'zh-cn'
+        
+        new_files = 1
+        
         for section in search:
             lang_files = [f for f in files[section] if isinstance(f, str) and f.endswith('.lang')]
             if not lang_files:
@@ -186,8 +199,13 @@ async def async_run(loop):
                 last_handled = folder+'/'+handled_langs[-1].title()+'.lang'
                 handled_langs = set(handled_langs)
                 handled_langs |= ignore_languages
+##                #########
+##                all_handled |= handled_langs
+##                continue
+##                #########
                 
                 unhandled = [v for k, v in languages.LANGCODES.items() if not k in handled_langs]
+##                unhandled = [languages.LANGCODES[l] for l in all_handled if not l in handled_langs]
                 
                 english, comments = await download_lang(f'{folder}/English.lang',
                                                         cache_folder, session)
@@ -211,14 +229,15 @@ async def async_run(loop):
                         new_lang = await convert.translate_file(english, loop, to_lang, 'en')
                         ensure_folder_exists(filename)
                         convert.write_lang_file(filename, new_lang, comments)
+                    new_files += 1
                 print('\n'+'#'*0xf+'Done with folder'+'#'*0xf)
     print('\nLanguages have been translated and saved to upload folder!')
     print('Writing Installer/Files.cfg...')
     file_list_filename = os.path.join(base_lang, 'Installer', 'Files.cfg')
-    file_comments = convert.update_comment_positions(file_comments, orig_files, files)
+    file_comments = convert.update_comment_positions(file_comments, files, orig_files)
     ensure_folder_exists(file_list_filename)
     convert.write_lang_file(file_list_filename, files, file_comments)
-    print('Done!')
+    print(f'Done! {new_files} new files created.')
 
 def run():
     "Main entry point"
