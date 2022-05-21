@@ -42,4 +42,4 @@ Versions:
 
 3.0.0 - Automate everything except fixing comment positions.
 
-3.1.0 (but it's really 2.1.0) - Fix comment positions
+3.1.0 - Fix comment positions
