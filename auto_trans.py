@@ -8,10 +8,10 @@
 
 __title__ = 'Auto_Trans'
 __author__ = 'CoolCat467'
-__version__ = '1.0.0'
+__version__ = '1.0.1'
 __ver_major__ = 1
 __ver_minor__ = 0
-__ver_patch__ = 0
+__ver_patch__ = 1
 
 import os
 import asyncio
@@ -178,12 +178,12 @@ async def async_run(loop):
                     break
         print(f'\nSections with .lang files: {", ".join(search)}\n')
         
-##        all_handled = {'english', 'russian', 'chinese', 'polish', 'belarusian',
-##                       'finnish', 'bulgarian', 'italian', 'bengali', 'ukrainian',
-##                       'hindi', 'french', 'japanese', 'arabic', 'slovak', 'korean',
-##                       'portuguese', 'german', 'spanish', 'dutch'}
-##        lc = languages.LANGCODES
-##        lc['chinese'] = 'zh-cn'
+        all_handled = {'english', 'russian', 'chinese', 'polish', 'belarusian',
+                       'finnish', 'bulgarian', 'italian', 'bengali', 'ukrainian',
+                       'hindi', 'french', 'japanese', 'arabic', 'slovak', 'korean',
+                       'portuguese', 'german', 'spanish', 'dutch'}
+        lc = languages.LANGCODES
+        lc['chinese'] = 'zh-cn'
         
         new_files = 1
         
@@ -206,6 +206,10 @@ async def async_run(loop):
                 
                 unhandled = [v for k, v in languages.LANGCODES.items() if not k in handled_langs]
 ##                unhandled = [languages.LANGCODES[l] for l in all_handled if not l in handled_langs]
+                
+                if not unhandled:
+                    print('All translations exist for this folder, skipping.')
+                    continue
                 
                 english, comments = await download_lang(f'{folder}/English.lang',
                                                         cache_folder, session)

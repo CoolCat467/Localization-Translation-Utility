@@ -11,7 +11,7 @@ import random
 import asyncio
 from urllib.parse import urlencode
 import urllib.request
-from typing import Final, Any, Callable, Optional
+from typing import Final, Any, Callable
 
 import aiohttp
 
@@ -49,9 +49,8 @@ def translate_sync(sentance: str, to_lang: str, source_lang: str='auto') -> str:
     "Syncronously preform translation of sentance from source_lang to to_lang"
     # Get url from function, which uses urllib to generate proper query
     url = get_translation_url(sentance, to_lang, source_lang)
-    f = urllib.request.urlopen(url, timeout=0.5)
-    request_result = json.loads(f.read())
-    f.close()
+    with urllib.request.urlopen(url, timeout=0.5) as file:
+        request_result = json.loads(file.read())
     return process_response(request_result)
 
 async def get_translated_coroutine(session, sentance: str, to_lang: str,
@@ -85,7 +84,7 @@ async def get_translated_coroutine(session, sentance: str, to_lang: str,
             pass
 
 async def translate_async(loop, sentances: list, to_lang: str,
-                          source_lang: str='auto', timeout: int=TIMEOUT) -> list:
+                          source_lang: str='auto', timeout: float | int=TIMEOUT) -> list:
     "Translate multiple sentances asyncronously."
     # Get a bunch of tasks running at once...
     timeout_obj = aiohttp.ClientTimeout(timeout)
@@ -115,7 +114,7 @@ async def translate_async(loop, sentances: list, to_lang: str,
         return await asyncio.gather(*coros)
 
 def translate_sentances(sentances: list, to_lang: str,
-                        source_lang: str='auto', timeout: int=TIMEOUT) -> list:
+                        source_lang: str='auto', timeout: float | int=TIMEOUT) -> list:
     "Translate many sentances at once using the power of asyncronous code."
     # Get asyncronous event loop
     event_loop = asyncio.new_event_loop()
