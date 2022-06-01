@@ -8,10 +8,37 @@
 
 __title__ = 'Time Utils'
 __author__ = 'CoolCat467'
-__version__ = '0.0.0'
-__ver_major__ = 0
+__version__ = '1.0.0'
+__ver_major__ = 1
 __ver_minor__ = 0
 __ver_patch__ = 0
+
+import time
+from functools import wraps
+
+def timed(func):
+    "Wrapper to time how long func takes"
+    @wraps(func)
+    def time_func(*args, **kwargs):
+        start = time.perf_counter()
+        result = func(*args, **kwargs)
+        stop = time.perf_counter()
+        func.call_elapsed = stop - start
+        print(f'\n{func.__name__} took {func.call_elapsed:.4f} seconds.\n')
+        return result
+    return time_func
+
+def async_timed(func):
+    "Wrapper to time how long func takes"
+    @wraps(func)
+    async def time_func(*args, **kwargs):
+        start = time.perf_counter()
+        result = await func(*args, **kwargs)
+        stop = time.perf_counter()
+        func.call_elapsed = stop - start
+        print(f'\n{func.__name__} took {func.call_elapsed:.4f} seconds.\n')
+        return result
+    return time_func
 
 def split_time(seconds: int) -> list:
     "Split time into decades, years, months, weeks, days, hours, minutes, and seconds."

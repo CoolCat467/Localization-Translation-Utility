@@ -8,17 +8,29 @@ __author__ = 'CoolCat467'
 
 import json
 import random
-import asyncio
 from urllib.parse import urlencode
 import urllib.request
 from typing import Final, Any, Callable
 
-import aiohttp
+import trio
+import httpx
 
 import agents
 
 TIMEOUT: Final[int] = 4
 AGENT = random.randint(0, 100000)
+
+async def gather(*tasks):
+    "Gather for trio."
+    async def collect(index, task, results):
+        task_func, *task_args = task
+        results[index] = await task_func(*task_args)
+    
+    results = {}
+    async with trio.open_nursery() as nursery:
+        for index, task in enumerate(tasks):
+            nursery.start_soon(collect, index, task, results)
+    return [results[i] for i in range(len(tasks))]
 
 ##def get_translation_url(sentance: str, to_language: str, source_language: str='auto') -> str:
 ##    "Return the url you should visit to get query translated to language to_language."
@@ -53,7 +65,7 @@ def translate_sync(sentance: str, to_lang: str, source_lang: str='auto') -> str:
         request_result = json.loads(file.read())
     return process_response(request_result)
 
-async def get_translated_coroutine(session, sentance: str, to_lang: str,
+async def get_translated_coroutine(client, sentance: str, to_lang: str,
                                    source_lang='auto') -> str:
     "Return the sentance translated, asyncronously."
     global AGENT
@@ -76,56 +88,17 @@ async def get_translated_coroutine(session, sentance: str, to_lang: str,
         
         try:
             # Go to that url and get our translated response
-            async with session.request('GET', url, ssl=False, headers=headers) as response:
-                # Wait for our response and make it json so we can look at
-                # it like a dictionary
-                return process_response(await response.json())
-        except asyncio.exceptions.TimeoutError:
+            response = await client.get(url, headers=headers)
+            # Wait for our response and make it json so we can look at
+            # it like a dictionary
+            return process_response(response.json())
+        except httpx.ConnectTimeout:
             pass
 
-async def translate_async(loop, sentances: list, to_lang: str,
-                          source_lang: str='auto', timeout: float | int=TIMEOUT) -> list:
+async def translate_async(client, sentances: list, to_lang: str, source_lang: str) -> list:
     "Translate multiple sentances asyncronously."
-    # Get a bunch of tasks running at once...
-    timeout_obj = aiohttp.ClientTimeout(timeout)
-    
-##    # Debug trace config
-##    trace_config = aiohttp.TraceConfig()
-##
-##    for name in [n for n in dir(trace_config) if n.startswith('on_') and not 'dns' in n]:
-##        def make_me_log(name):
-##            log_name = ' '.join(map(lambda x: x.title(), name.split('_')[1:]))
-##            async def log_thing(session, trace_config_ctx, params):
-##                print('#'*32)
-##                print(log_name)
-##                print(f'\n{session = }\n')
-##                print(f'{trace_config_ctx = }\n')
-##                print(f'{params = }')
-##                print('#'*32+'\n')
-##            return log_thing
-##        getattr(trace_config, name).append(make_me_log(name))
-    
-    async with aiohttp.ClientSession(loop=loop, timeout=timeout_obj
-##                                     trace_configs=[trace_config]
-                                     ) as session:
-        coros = [get_translated_coroutine(session, q, to_lang, source_lang) for q in sentances]
-        # then wait for all of them to finish. also asyncio.gather is awesome and
-        # puts everything in order correctly somehow whew glad i don't have to do that
-        return await asyncio.gather(*coros)
-
-def translate_sentances(sentances: list, to_lang: str,
-                        source_lang: str='auto', timeout: float | int=TIMEOUT) -> list:
-    "Translate many sentances at once using the power of asyncronous code."
-    # Get asyncronous event loop
-    event_loop = asyncio.new_event_loop()
-    # Run the main function until it's done and get our translated sentances
-    data = event_loop.run_until_complete(
-        translate_async(event_loop, sentances, to_lang, source_lang, timeout)
-    )
-    # Close event loop
-    event_loop.close()
-    # Return translated sentances
-    return data
+    coros = [(get_translated_coroutine, client, q, to_lang, source_lang) for q in sentances]
+    return await gather(*coros)
 
 def run() -> None:
     "Demonstrate code usage and the power of asynchronous code."    
@@ -166,7 +139,7 @@ def run() -> None:
         print('\n'.join(translate_sentances(sentances, dst_lang, src_lang, timeout)))
     
     without_async()
-    with_async()
+##    with_async()
 
 if __name__ == '__main__':
     print(f'{__title__} \nProgrammed by {__author__}.')

@@ -8,9 +8,9 @@
 
 __title__ = 'Convert'
 __author__ = 'CoolCat467'
-__version__ = '1.1.0'
+__version__ = '1.2.0'
 __ver_major__ = 1
-__ver_minor__ = 1
+__ver_minor__ = 2
 __ver_patch__ = 0
 
 import json
@@ -392,10 +392,11 @@ def list_to_dict(keys: list, values: list) -> dict:
 ##print((k, v))
 ##print(list_to_dict(k, v))
 
-async def translate_file(data: dict, loop, to_lang: str, src_lang: str='auto') -> dict:
+async def translate_file(data: dict, client, to_lang: str, src_lang: str='auto') -> dict:
     "Translate an entire file."
     keys, sentances = dict_to_list(data)
-    results = await translate.translate_async(loop, sentances, to_lang, src_lang, 1.5)
+    results = await translate.translate_async(client, sentances,
+                                              to_lang, src_lang)
     return list_to_dict(keys, results)
 
 def translate_file_copy_paste(data: dict) -> dict:
