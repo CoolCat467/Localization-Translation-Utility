@@ -42,4 +42,6 @@ Versions:
 
 3.0.0 - Automate everything except fixing comment positions.
 
-3.1.0 - Fix comment positions
+3.1.0 - Fix comment positions.
+
+4.0.0 - Change to trio instead of asyncio and add ability to fix single untranslated value.
