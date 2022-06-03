@@ -8,16 +8,15 @@
 
 __title__ = 'Convert'
 __author__ = 'CoolCat467'
-__version__ = '1.2.0'
+__version__ = '1.3.0'
 __ver_major__ = 1
-__ver_minor__ = 2
+__ver_minor__ = 3
 __ver_patch__ = 0
 
 import json
 
 import translate
 
-# lintcheck: too-many-locals (R0914): Too many local variables (25/15)
 def lang_to_json(lang_data: str) -> tuple[dict, dict]:
     "Fix lang data to be readable by json parser. Return data and comments."
     if not lang_data[-1]:
@@ -141,7 +140,6 @@ def lang_to_json(lang_data: str) -> tuple[dict, dict]:
 ##    print(comments)
     return json.loads('\n'.join(new_lines)), comments
 
-# lintcheck: too-many-locals (R0914): Too many local variables (16/15)
 def dict_to_lang(data: dict, comments: dict) -> str:
     "Convert data and comments to MineOS .lang data"
     json_data = json.dumps(data, ensure_ascii=False,
@@ -184,9 +182,9 @@ def dict_to_lang(data: dict, comments: dict) -> str:
                     else:
                         comment = indent
                     new_lines.insert(pos, comment)
-            prev = new_lines[-1]
-            if not prev.endswith(','):
-                new_lines[-1] = prev+','
+##            prev = new_lines[-1]
+##            if not prev.endswith(','):
+##                new_lines[-1] = prev+','
         
         if ' = ' in line:
             key, value = line.split(' = ', 1)
@@ -204,21 +202,22 @@ def dict_to_lang(data: dict, comments: dict) -> str:
             line = f'{indent}[0] = {value}'
         new_lines.append(line)
     
-    path = '/'.join(s[0] for s in section)
-    sec_start = section.pop()[1]
-    if path in comments:
-        for offset, comment in comments[path].items():
-            pos = sec_start + offset
-            if pos >= len(new_lines):
-                indent = ''
-            else:
-                indent = new_lines[pos].count('\t')*'\t'
-            
-            if comment:
-                comment = f'{indent}-- {comment}'
-            else:
-                comment = indent
-            new_lines.insert(pos, comment)
+    for _ in range(len(section)):
+        path = '/'.join(s[0] for s in section)
+        sec_start = section.pop()[1]
+        if path in comments:
+            for offset, comment in comments[path].items():
+                pos = sec_start + offset
+                if pos >= len(new_lines):
+                    indent = ''
+                else:
+                    indent = new_lines[pos].count('\t')*'\t'
+                
+                if comment:
+                    comment = f'{indent}-- {comment}'
+                else:
+                    comment = indent
+                new_lines.insert(pos, comment)
     
     return '\n'.join(new_lines)
 
@@ -238,7 +237,6 @@ def section_to_walk(section: list) -> tuple:
         dirs[path].append(filename)
     return tuple(dirs.items())
 
-# lintcheck: too-many-locals (R0914): Too many local variables (18/15)
 def update_comment_positions(original_pos: dict, new_data: dict, old_data: dict):
     "Update comment positions"
     # Get json of files
@@ -312,7 +310,7 @@ def dict_to_list(data: dict) -> tuple[list, list]:
         if isinstance(key, int):
             key = f'{key}?'
         if isinstance(value, dict):
-            enc_dict = [(f'{key}${key}$', value) for key, value in zip(*dict_to_list(value))]
+            enc_dict = [(f'{key}${dkey}$', value) for dkey, value in zip(*dict_to_list(value))]
             for dkey, dvalue in enc_dict:
                 keys.append(dkey)
                 values.append(dvalue)
@@ -328,7 +326,6 @@ def dict_to_list(data: dict) -> tuple[list, list]:
 
 def list_to_dict(keys: list, values: list) -> dict:
     "Convert split lists of compiled keys and values back into dictionary"
-    # lintcheck: too-many-branches (R0912): Too many branches (19/12)
     def unwrap_keys(key_data: str, set_val: str, data: dict) -> None:
         pidx = 0
         while key_data:
@@ -397,6 +394,12 @@ async def translate_file(data: dict, client, to_lang: str, src_lang: str='auto')
     keys, sentances = dict_to_list(data)
     results = await translate.translate_async(client, sentances,
                                               to_lang, src_lang)
+    for old, new in zip(enumerate(sentances), results):
+        idx, orig = old
+        if new is None or not isinstance(old, str):
+            results[idx] = orig
+        elif orig.endswith(' ') and not new.endswith(' '):
+            results[idx] = new + ' '
     return list_to_dict(keys, results)
 
 def translate_file_copy_paste(data: dict) -> dict:

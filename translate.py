@@ -59,6 +59,10 @@ def process_response(result: list) -> str:
 
 def translate_sync(sentance: str, to_lang: str, source_lang: str='auto') -> str:
     "Syncronously preform translation of sentance from source_lang to to_lang"
+    if isinstance(sentance, int):
+        # skip numbers
+        return sentance
+    
     # Get url from function, which uses urllib to generate proper query
     url = get_translation_url(sentance, to_lang, source_lang)
     with urllib.request.urlopen(url, timeout=0.5) as file:
@@ -68,7 +72,11 @@ def translate_sync(sentance: str, to_lang: str, source_lang: str='auto') -> str:
 async def get_translated_coroutine(client, sentance: str, to_lang: str,
                                    source_lang='auto') -> str:
     "Return the sentance translated, asyncronously."
-    global AGENT
+    global AGENT# pylint: disable=global-statement
+    
+    if isinstance(sentance, int):
+        # skip numbers
+        return sentance
     # Make sure we have a timeout, so that in the event of network failures
     # or something code doesn't get stuck
     # Get url from function, which uses urllib to generate proper query
@@ -133,10 +141,10 @@ def run() -> None:
     def without_async() -> None:
         print('\n'.join(translate_sync(sentance, dst_lang, src_lang) for sentance in sentances))
     # and another that does it all asyncronously, both timed.
-    @timed
-    def with_async() -> None:
-        timeout = 1.5
-        print('\n'.join(translate_sentances(sentances, dst_lang, src_lang, timeout)))
+##    @timed
+##    def with_async() -> None:
+##        timeout = 1.5
+##        print('\n'.join(translate_sentances(sentances, dst_lang, src_lang, timeout)))
     
     without_async()
 ##    with_async()

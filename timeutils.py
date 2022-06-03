@@ -102,7 +102,7 @@ def format_time(seconds: int, single_title_allowed: bool=False) -> str:
     return combine_and(data)
 
 def run():
-    pass
+    "Run as main"
 
 if __name__ == '__main__':
     print(f'{__title__} v{__version__}\nProgrammed by {__author__}.')
