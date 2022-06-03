@@ -45,3 +45,5 @@ Versions:
 3.1.0 - Fix comment positions.
 
 4.0.0 - Change to trio instead of asyncio and add ability to fix single untranslated value.
+
+4.1.0 - Add ability to fix untranslated values in all localization files
