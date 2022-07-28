@@ -138,4 +138,4 @@ LANGUAGES = {
     'zu': 'zulu',
 }
 
-LANGCODES = dict(reversed(items) for items in LANGUAGES.items())
+LANGCODES = dict((value, key) for key, value in LANGUAGES.items())

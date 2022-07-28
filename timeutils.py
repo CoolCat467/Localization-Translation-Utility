@@ -13,34 +13,40 @@ __ver_major__ = 1
 __ver_minor__ = 0
 __ver_patch__ = 0
 
+from typing import Any, Awaitable, Callable, TypeVar, cast
+
 import time
 from functools import wraps
 
-def timed(func):
+F = TypeVar('F', bound=Callable[..., Any])
+
+def timed(func: F) -> F:
     "Wrapper to time how long func takes"
     @wraps(func)
-    def time_func(*args, **kwargs):
+    def time_func(*args: Any, **kwargs: Any) -> Any:
         start = time.perf_counter()
         result = func(*args, **kwargs)
         stop = time.perf_counter()
-        func.call_elapsed = stop - start
-        print(f'\n{func.__name__} took {func.call_elapsed:.4f} seconds.\n')
+        call_elapsed = stop - start
+        print(f'\n{func.__name__} took {call_elapsed:.4f} seconds.\n')
         return result
-    return time_func
+    return cast(F, time_func)
 
-def async_timed(func):
+C = TypeVar('C', bound=Callable[..., Awaitable[Any]])
+
+def async_timed(func: C) -> C:
     "Wrapper to time how long func takes"
     @wraps(func)
-    async def time_func(*args, **kwargs):
+    async def time_func(*args: Any, **kwargs: Any) -> Any:
         start = time.perf_counter()
         result = await func(*args, **kwargs)
         stop = time.perf_counter()
-        func.call_elapsed = stop - start
-        print(f'\n{func.__name__} took {func.call_elapsed:.4f} seconds.\n')
+        call_elapsed = stop - start
+        print(f'\n{func.__name__} took {call_elapsed:.4f} seconds.\n')
         return result
-    return time_func
+    return cast(C, time_func)
 
-def split_time(seconds: int) -> list:
+def split_time(seconds: int) -> list[int]:
     "Split time into decades, years, months, weeks, days, hours, minutes, and seconds."
     seconds = int(seconds)
     def mod_time(sec: int, num: int) -> tuple:
@@ -72,7 +78,7 @@ def split_time(seconds: int) -> list:
         ret.append(edivs)
     return ret
 
-def combine_and(data: list) -> str:
+def combine_and(data: list[str]) -> str:
     "Join values of text, and have 'and' with the last one properly."
     data = list(data)
     if len(data) >= 2:
@@ -101,7 +107,7 @@ def format_time(seconds: int, single_title_allowed: bool=False) -> str:
         data.append(str(value)+' '+title)
     return combine_and(data)
 
-def run():
+def run() -> None:
     "Run as main"
 
 if __name__ == '__main__':

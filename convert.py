@@ -2,30 +2,59 @@
 # -*- coding: utf-8 -*-
 # Conversion tools
 
-"Tools for lang conversion."
+"Tools for MineOS data file conversion."
 
 # Programmed by CoolCat467
 
 __title__ = 'Convert'
 __author__ = 'CoolCat467'
-__version__ = '1.3.0'
+__version__ = '1.4.0'
 __ver_major__ = 1
-__ver_minor__ = 3
+__ver_minor__ = 4
 __ver_patch__ = 0
 
 import json
 
-import translate
+def squish(text: str) -> str:
+    "Remove all newlines and tabs from text"
+    return text.translate({10: '', 9: ''})
+
+def split_squished(squished_text: str) -> str:
+    "Split text with {} and , with no indent or newlines into separate lines"
+    lines = []
+    indent = 0
+    cline = ''
+    def cartrage_return() -> None:
+        "Add current line with indent"
+        nonlocal cline
+        lines.append('\t'*indent+f'{cline}\n')
+        cline = ''
+    for char in squished_text:
+        match char:
+            case '{':
+                cline += char
+                cartrage_return()
+                indent += 1
+            case '}':
+                cartrage_return()
+                cline += char
+                indent -= 1
+            case ',':
+                cline += char
+                cartrage_return()
+            case _:
+                cline += char
+    cartrage_return()
+    return ''.join(lines)[:-1]
 
 def lang_to_json(lang_data: str) -> tuple[dict, dict]:
-    "Fix lang data to be readable by json parser. Return data and comments."
+    "Fix language data to be readable by json parser. Return data and comments."
     if not lang_data[-1]:
         lang_data = lang_data[:-1]
     lines = lang_data.splitlines()
     
     new_lines = []
     comments: dict[str, dict[int, str]] = {}
-    
     for lidx, line in enumerate(lines):
         if '{' in line and '}' in line:
             n_indent = line.count('\t')*'\t'
@@ -50,6 +79,7 @@ def lang_to_json(lang_data: str) -> tuple[dict, dict]:
             new_lines += nline.splitlines()
             continue
         new_lines.append(line)
+##    print('\n'.join(new_lines))
     lines, new_lines = new_lines, []
     
     section = [('null', 0)]
@@ -65,13 +95,13 @@ def lang_to_json(lang_data: str) -> tuple[dict, dict]:
             if '--' in line:
                 comment = line.split('--')[1].strip()
                 
-                if not path in comments:
+                if path not in comments:
                     comments[path] = {}
                 
                 comments[path][offset] = comment
                 continue
             if line.strip() == '':
-                if not path in comments:
+                if path not in comments:
                     comments[path] = {}
                 
                 comments[path][offset] = ''
@@ -84,25 +114,26 @@ def lang_to_json(lang_data: str) -> tuple[dict, dict]:
             
             key = key.strip()
             value = value.strip()
+##            print(key)
             
-            if key.startswith('[') and key.endswith(']') and close_stack[-1]:
+            if key.startswith('[') and key.endswith(']'):# and close_stack[-1]:
                 key = key[1:-1]
-                com = False
-                strng = False
-                if value.endswith(','):
-                    value = value[:-1]
-                    com = True
-                if value.startswith('"') and value.endswith('"'):
-                    value = value[1:-1]
-                    strng = True
-                value += '$$$$'
-                if strng:
-                    value = f'"{value}"'
-                if com:
-                    value += ','
-                
-                new_lines.append(f'{n_indent}{value}')
-                continue
+##                com = False
+##                strng = False
+##                if value.endswith(','):
+##                    value = value[:-1]
+##                    com = True
+##                if value.startswith('"') and value.endswith('"'):
+##                    value = value[1:-1]
+##                    strng = True
+##                value += '$$$$'
+##                if strng:
+##                    value = f'"{value}"'
+##                if com:
+##                    value += ','
+##                
+##                new_lines.append(f'{n_indent}{value}')
+##                continue
             if value.startswith('{'):
                 section.append((key, lidx))
                 nidx = lidx+1
@@ -141,7 +172,7 @@ def lang_to_json(lang_data: str) -> tuple[dict, dict]:
     return json.loads('\n'.join(new_lines)), comments
 
 def dict_to_lang(data: dict, comments: dict) -> str:
-    "Convert data and comments to MineOS .lang data"
+    "Convert data and comments to MineOS file data"
     json_data = json.dumps(data, ensure_ascii=False,
                            indent='\t', separators=(',', ' = '))
     new_lines: list[str] = []
@@ -182,9 +213,6 @@ def dict_to_lang(data: dict, comments: dict) -> str:
                     else:
                         comment = indent
                     new_lines.insert(pos, comment)
-##            prev = new_lines[-1]
-##            if not prev.endswith(','):
-##                new_lines[-1] = prev+','
         
         if ' = ' in line:
             key, value = line.split(' = ', 1)
@@ -197,9 +225,9 @@ def dict_to_lang(data: dict, comments: dict) -> str:
             
             line = f'{indent}{key} = {value}'
         
-        if '$$$$' in line:
-            value = line.strip().replace('$$$$', '', 1)
-            line = f'{indent}[0] = {value}'
+##        if '$$$$' in line:
+##            value = line.strip().replace('$$$$', '', 1)
+##            line = f'{indent}[0] = {value}'
         new_lines.append(line)
     
     for _ in range(len(section)):
@@ -221,32 +249,18 @@ def dict_to_lang(data: dict, comments: dict) -> str:
     
     return '\n'.join(new_lines)
 
-def split(path: str):
-    """Split a pathname.  Returns tuple "(head, tail)" where "tail" is
-everything after the final slash.  Either part may be empty."""
-    path_data = path.split('/')
-    return '/'.join(path_data[:-1]), path_data[-1]
-
-def section_to_walk(section: list) -> tuple:
-    "Return folder and files from section"
-    dirs: dict[str, list[str]] = {}
-    for full_path in section:
-        path, filename = split(full_path)
-        if not path in dirs:
-            dirs[path] = []
-        dirs[path].append(filename)
-    return tuple(dirs.items())
-
-def update_comment_positions(original_pos: dict, new_data: dict, old_data: dict):
+def update_comment_positions(original_pos: dict,
+                             new_data: dict,
+                             old_data: dict) -> dict[str, dict[int, str]]:
     "Update comment positions"
-    # Get json of files
-    old_json = json.dumps(old_data, indent='\t').splitlines()#.replace('\t', '').splitlines()
-    new_json = json.dumps(new_data, indent='\t').splitlines()#.replace('\t', '').splitlines()
+    # Get json text of files
+    old_json = json.dumps(old_data, indent='\t').splitlines()
+    new_json = json.dumps(new_data, indent='\t').splitlines()
     
     new_comments: dict[str, dict[int, str]] = {}
-    # For each section in the original comments data
+    # For each root section in the original comments data
     for section in (f'null/{x}' for x in old_data if f'null/{x}' in original_pos):
-        # Reads include comment, so have to keep track of coments read.
+        # Reads include comments, so have to keep track of comments read.
         read_offset = 0
         
         # Make predictions of guess where it is in new version more accurate
@@ -256,7 +270,7 @@ def update_comment_positions(original_pos: dict, new_data: dict, old_data: dict)
         name = section[5:]
         # If sections of data are not the same
         if new_data[name] != old_data[name]:
-            # Find start of section in new and old json
+            # Find start of bock section in new and old json
             section_start = f'\t"{name}": ['
             obs = old_json.index(section_start)-1
             nbs = new_json.index(section_start)-1
@@ -289,149 +303,15 @@ def update_comment_positions(original_pos: dict, new_data: dict, old_data: dict)
     return new_comments
 
 def read_lang_file(filepath: str) -> tuple[dict, dict]:
-    "Read MineOS .lang file"
+    "Read MineOS data file"
     with open(filepath, 'r', encoding='utf-8') as file_point:
         fdata = file_point.read()
     return lang_to_json(fdata)
 
 def write_lang_file(filepath: str, data: dict, comments: dict) -> None:
-    "Write MineOS .lang file"
+    "Write MineOS data file"
     with open(filepath, 'w', encoding='utf-8') as file_point:
         file_point.write(dict_to_lang(data, comments))
-
-def partquotes(text: str, item: int, quotes: str='"') -> str:
-    "Return item th part of text that is enclosed in quotes"
-    return text.split(quotes)[2*item+1]
-
-def dict_to_list(data: dict) -> tuple[list, list]:
-    "Convert dictionary to two lists, one of keys, one of values."
-    keys, values = [], []
-    for key, value in data.items():
-        if isinstance(key, int):
-            key = f'{key}?'
-        if isinstance(value, dict):
-            enc_dict = [(f'{key}${dkey}$', value) for dkey, value in zip(*dict_to_list(value))]
-            for dkey, dvalue in enc_dict:
-                keys.append(dkey)
-                values.append(dvalue)
-        elif isinstance(value, list):
-            enc_list = {f'{key}#{i}?#': v for i, v in enumerate(value)}
-            for lkey, lvalue in zip(*dict_to_list(enc_list)):
-                keys.append(lkey)
-                values.append(lvalue)
-        else:
-            keys.append(key)
-            values.append(value)
-    return keys, values
-
-def list_to_dict(keys: list, values: list) -> dict:
-    "Convert split lists of compiled keys and values back into dictionary"
-    def unwrap_keys(key_data: str, set_val: str, data: dict) -> None:
-        pidx = 0
-        while key_data:
-            char_key_data = str(key_data)
-            if ('$' in char_key_data or '#' in char_key_data):
-                found = 0
-                idx, char = 0, '"'
-                for idx, char in enumerate(char_key_data):
-                    if char in {'$', '#'}:
-                        if found == (pidx*2):
-                            break
-                        found += 1
-                parent = key_data[:idx]
-                next_layer = partquotes(key_data, 0, char)
-                
-                parent_val: str | int = parent
-##                next_layer_val: str | int = next_layer
-                if parent.endswith('?'):
-                    parent_val = int(parent[:-1])
-##                if next_layer.endswith('?'):
-##                    next_layer_val = int(next_layer[:-1])
-                
-                if char == '#':#list index
-                    if isinstance(data, dict):
-                        if not parent_val in data:
-                            data[parent_val] = []
-                    else:
-                        if parent_val+1 > len(data):
-                            data.append([])
-                else:#dict index
-                    if isinstance(data, dict):
-                        if not parent_val in data:
-                            data[parent_val] = {}
-                    else:
-                        if parent_val+1 > len(data):
-                            data.append({})
-                
-                key_data = key_data[idx+len(next_layer)+2:]
-                if key_data:
-                    key_data = next_layer+key_data
-                    unwrap_keys(key_data, set_val, data[parent_val])
-                    key_data = ''
-                else:
-                    unwrap_keys(next_layer, set_val, data[parent_val])
-            elif isinstance(data, list):
-                data.append(set_val)
-                key_data = ''
-            else:
-                if isinstance(key_data, str) and key_data.endswith('?'):
-                    data[int(key_data[:-1])] = set_val
-                else:
-                    data[key_data] = set_val
-                key_data = ''
-            pidx += 1
-    data: dict = {}
-    for key, value in zip(keys, values):
-        unwrap_keys(key, value, data)
-    return data
-
-##k, v = dict_to_list({'cat': {3: '5', 7:'9', 4: [4, 3, 3]}, 'meep': [1, 2, [2, 3, 4]]})
-##print((k, v))
-##print(list_to_dict(k, v))
-
-async def translate_file(data: dict, client, to_lang: str, src_lang: str='auto') -> dict:
-    "Translate an entire file."
-    keys, sentances = dict_to_list(data)
-    results = await translate.translate_async(client, sentances,
-                                              to_lang, src_lang)
-    for old, new in zip(enumerate(sentances), results):
-        idx, orig = old
-        if new is None or not isinstance(old, str):
-            results[idx] = orig
-        elif orig.endswith(' ') and not new.endswith(' '):
-            results[idx] = new + ' '
-    return list_to_dict(keys, results)
-
-def translate_file_copy_paste(data: dict) -> dict:
-    "Translate an entire file by creating text to paste into translator and reading the response"
-    keys, sentances = dict_to_list(data)
-    encoded = ' ###### '.join(sentances)
-    print()
-    print(encoded)
-    print()
-    raw_results = input('Paste result here: ')
-    results = raw_results.split(' ###### ')
-    return list_to_dict(keys, results)
-
-def translate_files_copy_paste(file_dict_list: list) -> list[dict]:
-    "Translate entire files by creating text to paste into translator and reading the response"
-    all_enc = []
-    all_keys = []
-    for data in file_dict_list:
-        keys, sentances = dict_to_list(data)
-        encoded = ' ###### '.join(sentances)
-        all_enc.append(encoded)
-        all_keys.append(keys)
-    print()
-    print(' &&&&&& '.join(all_enc))
-    print()
-    raw_results = input('Paste result here: ')
-    files = raw_results.split(' &&&&&& ')
-    results = []
-    for keys, enc_values in zip(all_keys, files):
-        values = enc_values.split(' ###### ')
-        results.append(list_to_dict(keys, values))
-    return results
 
 if __name__ == '__main__':
     print(f'{__title__} v{__version__}\nProgrammed by {__author__}.\n')

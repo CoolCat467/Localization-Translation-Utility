@@ -10,9 +10,9 @@ import json
 import random
 from urllib.parse import urlencode
 import urllib.request
-from typing import Final, Any, Callable
+from typing import Final, Any, Callable, Sequence
 
-import trio
+import trio# type: ignore
 import httpx
 
 import agents
@@ -20,13 +20,13 @@ import agents
 TIMEOUT: Final[int] = 4
 AGENT = random.randint(0, 100000)
 
-async def gather(*tasks):
+async def gather(*tasks: Sequence) -> list:
     "Gather for trio."
-    async def collect(index, task, results):
+    async def collect(index: int, task: list, results: dict[int, Any]) -> None:
         task_func, *task_args = task
         results[index] = await task_func(*task_args)
     
-    results = {}
+    results: dict[int, Any] = {}
     async with trio.open_nursery() as nursery:
         for index, task in enumerate(tasks):
             nursery.start_soon(collect, index, task, results)
@@ -57,10 +57,14 @@ def process_response(result: list) -> str:
         part = part[0]
     return part
 
+def is_url(text: str) -> bool:
+    "Return True if text is probably a url."
+    return text.startswith('http') and '://' in text and '.' in text and not ' ' in text
+
 def translate_sync(sentance: str, to_lang: str, source_lang: str='auto') -> str:
     "Syncronously preform translation of sentance from source_lang to to_lang"
-    if isinstance(sentance, int):
-        # skip numbers
+    if isinstance(sentance, int) or is_url(sentance):
+        # skip numbers and urls
         return sentance
     
     # Get url from function, which uses urllib to generate proper query
@@ -69,13 +73,14 @@ def translate_sync(sentance: str, to_lang: str, source_lang: str='auto') -> str:
         request_result = json.loads(file.read())
     return process_response(request_result)
 
-async def get_translated_coroutine(client, sentance: str, to_lang: str,
-                                   source_lang='auto') -> str:
+async def get_translated_coroutine(client: httpx.AsyncClient,
+                                   sentance: str, to_lang: str,
+                                   source_lang: str='auto') -> str:
     "Return the sentance translated, asyncronously."
     global AGENT# pylint: disable=global-statement
     
-    if isinstance(sentance, int):
-        # skip numbers
+    if isinstance(sentance, int) or is_url(sentance):
+        # skip numbers and urls
         return sentance
     # Make sure we have a timeout, so that in the event of network failures
     # or something code doesn't get stuck
@@ -83,7 +88,7 @@ async def get_translated_coroutine(client, sentance: str, to_lang: str,
     url = get_translation_url(sentance, to_lang, source_lang)
     
     headers = {
-        'User-Agent': None,
+        'User-Agent': '',
         'Accept': '*/*',
         'Accept-Language': 'en-US,en-GB; q=0.5',
         'Accept-Encoding': 'gzip, deflate',
@@ -103,52 +108,54 @@ async def get_translated_coroutine(client, sentance: str, to_lang: str,
         except httpx.ConnectTimeout:
             pass
 
-async def translate_async(client, sentances: list, to_lang: str, source_lang: str) -> list:
+async def translate_async(client: httpx.AsyncClient,
+                          sentances: list, to_lang: str,
+                          source_lang: str) -> list:
     "Translate multiple sentances asyncronously."
     coros = [(get_translated_coroutine, client, q, to_lang, source_lang) for q in sentances]
     return await gather(*coros)
 
-def run() -> None:
-    "Demonstrate code usage and the power of asynchronous code."    
-    # Quick make a nice little function stopwatch wrapper
-    # pylint: disable=import-outside-toplevel
-    import time
-    from functools import wraps
-    
-    def timed(func) -> Callable[..., Any]:
-        @wraps(func)
-        def time_func(*args, **kwargs) -> Any:
-            start = time.perf_counter()
-            result = func(*args, **kwargs)
-            stop = time.perf_counter()
-            print(f'\n{func.__name__} took {stop-start:.4f} secconds.\n')
-            return result
-        return time_func
-    
-    # Get a bunch of sentances to translate
-    sentances = ['Good morning', 'I would like to buy a muffin', 'bye']
-    # Tell the person watching us what they are
-    print('\nWe will be translating the following sentances...\n')
-    print('\n'.join(sentances)+'\n')
-    # We will be translating from english to french
-    src_lang = 'en'
-    dst_lang = 'fr'
-    
-    print(f'... to the language corrosponding with language code "{dst_lang}".\n')
-    
-    # Define two functions, one that translates our sentances one at a time (normaly)
-    @timed
-    def without_async() -> None:
-        print('\n'.join(translate_sync(sentance, dst_lang, src_lang) for sentance in sentances))
-    # and another that does it all asyncronously, both timed.
+##def run() -> None:
+##    "Demonstrate code usage and the power of asynchronous code."    
+##    # Quick make a nice little function stopwatch wrapper
+##    # pylint: disable=import-outside-toplevel
+##    import time
+##    from functools import wraps
+##    
+##    def timed(func) -> Callable[..., Any]:
+##        @wraps(func)
+##        def time_func(*args, **kwargs) -> Any:
+##            start = time.perf_counter()
+##            result = func(*args, **kwargs)
+##            stop = time.perf_counter()
+##            print(f'\n{func.__name__} took {stop-start:.4f} secconds.\n')
+##            return result
+##        return time_func
+##    
+##    # Get a bunch of sentances to translate
+##    sentances = ['Good morning', 'I would like to buy a muffin', 'bye']
+##    # Tell the person watching us what they are
+##    print('\nWe will be translating the following sentances...\n')
+##    print('\n'.join(sentances)+'\n')
+##    # We will be translating from english to french
+##    src_lang = 'en'
+##    dst_lang = 'fr'
+##    
+##    print(f'... to the language corrosponding with language code "{dst_lang}".\n')
+##    
+##    # Define two functions, one that translates our sentances one at a time (normaly)
 ##    @timed
-##    def with_async() -> None:
-##        timeout = 1.5
-##        print('\n'.join(translate_sentances(sentances, dst_lang, src_lang, timeout)))
-    
-    without_async()
-##    with_async()
+##    def without_async() -> None:
+##        print('\n'.join(translate_sync(sentance, dst_lang, src_lang) for sentance in sentances))
+##    # and another that does it all asyncronously, both timed.
+####    @timed
+####    def with_async() -> None:
+####        timeout = 1.5
+####        print('\n'.join(translate_sentances(sentances, dst_lang, src_lang, timeout)))
+##    
+##    without_async()
+####    with_async()
 
 if __name__ == '__main__':
     print(f'{__title__} \nProgrammed by {__author__}.')
-    run()
+##    run()

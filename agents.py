@@ -33,6 +33,8 @@ Anime no Sekai 2021
 https://github.com/Animenosekai/useragents/blob/main/pyuseragents/data/list.py
 """
 
+# pylint: disable=too-many-lines,line-too-long
+
 import random
 
 USER_AGENTS = [
