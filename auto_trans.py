@@ -30,6 +30,8 @@ import languages
 import timeutils
 import extricate
 
+import lolcat
+
 ##def raw_github_address(user: str, repo: str, branch: str, path: str) -> str:
 ##    "Get raw github user content url of a specific file."
 ####    return f'https://raw.githubusercontent.com/{user}/{repo}/{branch}/{path}'
@@ -450,7 +452,7 @@ async def translate_lolcat(client: httpx.AsyncClient) -> None:
     async def trans_coro(english: dict,
                          to_lang: str,
                          folder: str) -> dict:
-        return translate_file_copy_paste(english)
+        return await lolcat.translate_file(english)
     
     await abstract_translate(client, base_lang, cache_folder,
                              get_unhandled, trans_coro)
@@ -458,9 +460,10 @@ async def translate_lolcat(client: httpx.AsyncClient) -> None:
 async def async_run() -> None:
     "Async entry point"
     async with httpx.AsyncClient(http2 = True) as client:
-##        await translate_main(client)
+        await translate_main(client)
         await translate_broken_values(client)
 ##        await translate_new_value(client, 'screenPreciseMode', 'Applications/Settings.app/Localizations')
+        await translate_lolcat(client)
 
 def run() -> None:
     "Main entry point"

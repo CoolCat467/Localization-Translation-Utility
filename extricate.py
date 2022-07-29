@@ -8,9 +8,9 @@
 
 __title__ = 'Extricate'
 __author__ = 'CoolCat467'
-__version__ = '0.0.0'
+__version__ = '0.0.1'
 
-from typing import Any, Callable
+from typing import Any, Callable, Final
 
 def wrap_quotes(text: str, quotes: str = '"') -> str:
     "Return text wrapped in quotes"
@@ -20,7 +20,7 @@ def unwrap_quotes(text: str, layers: int = 1) -> str:
     "Unwrap given layers of quotes"
     return text[layers:-layers]
 
-TYPE_CHAR = {
+TYPE_CHAR: Final = {
     'str': '!',
     'int': '@',
     'float': '#',
@@ -28,9 +28,9 @@ TYPE_CHAR = {
     'dict': '%',
     'list': '^'
 }
-CHAR_TYPE = {v:k for k, v in TYPE_CHAR.items()}
+CHAR_TYPE: Final = {v:k for k, v in TYPE_CHAR.items()}
 
-SEP = '&'
+SEP: Final = '&'
 
 def dict_to_list(data: dict | list | str | int,
                  ) -> tuple[list[str], list[str]]:
@@ -70,7 +70,7 @@ def dict_to_list(data: dict | list | str | int,
     return read_block(data)
 
 class Segment:
-    "Segment with item"
+    "Segment with item. Basically like a pointer"
     __slots__ = ('item',)
     def __init__(self, item: Any = None) -> None:
         self.item = item
@@ -84,7 +84,7 @@ class Segment:
 
     def unwrap(self) -> Any:
         "Unwrap contained item"
-        if not isinstance(self.item, (dict, list)):
+        if not self.is_container():
             return self.item
         match type(self.item).__name__:
             case 'dict':
@@ -123,6 +123,7 @@ def list_to_dict(keys: list[str], values: list[str]
         unwrap_key(segment, index, map_func(value))
 
     def unwrap_key(segment: Segment, key: str, value: Any) -> None:
+        "Take apart key and set segment item to value in the right place"
         head = key[0]
         if head == '':
             segment.item = value

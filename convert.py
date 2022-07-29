@@ -2,16 +2,16 @@
 # -*- coding: utf-8 -*-
 # Conversion tools
 
-"Tools for MineOS data file conversion."
+"Basically Lua Table parsing to and writing from Python dictionary"
 
 # Programmed by CoolCat467
 
 __title__ = 'Convert'
 __author__ = 'CoolCat467'
-__version__ = '1.4.0'
+__version__ = '1.4.1'
 __ver_major__ = 1
 __ver_minor__ = 4
-__ver_patch__ = 0
+__ver_patch__ = 1
 
 import json
 
@@ -92,6 +92,7 @@ def lang_to_json(lang_data: str) -> tuple[dict, dict]:
             offset = lidx - section[-1][1]
             path = '/'.join(s[0] for s in section)
             
+            # Remember comments by section block and offset from start
             if '--' in line:
                 comment = line.split('--')[1].strip()
                 
@@ -100,13 +101,15 @@ def lang_to_json(lang_data: str) -> tuple[dict, dict]:
                 
                 comments[path][offset] = comment
                 continue
+            # Remember empty lines as empty comment
             if line.strip() == '':
                 if path not in comments:
                     comments[path] = {}
                 
                 comments[path][offset] = ''
                 continue
-        if '=' in line:
+            # In both cases do not continue parsing line
+        if '=' in line:# Setting new item
             key, value = line.split('=', 1)
             
             indent = key.count('\t')
@@ -116,54 +119,74 @@ def lang_to_json(lang_data: str) -> tuple[dict, dict]:
             value = value.strip()
 ##            print(key)
             
-            if key.startswith('[') and key.endswith(']'):# and close_stack[-1]:
+            if key.startswith('[') and key.endswith(']'):
                 key = key[1:-1]
-##                com = False
-##                strng = False
-##                if value.endswith(','):
-##                    value = value[:-1]
-##                    com = True
-##                if value.startswith('"') and value.endswith('"'):
-##                    value = value[1:-1]
-##                    strng = True
-##                value += '$$$$'
-##                if strng:
-##                    value = f'"{value}"'
-##                if com:
-##                    value += ','
-##                
-##                new_lines.append(f'{n_indent}{value}')
-##                continue
-            if value.startswith('{'):
+                
+                # VK app has strange thing,
+                # [0] index defined in what is read as list
+                # because Lua tables are incredibly powerful
+                # but a mess to deal with in Python.
+                
+                # This basically is hack to add four $ to end
+                # of value that undo process will find
+                # and fix for us
+            
+                # TODO: Properly handle mixed table. Not sure how
+                # to store as python object though.
+                if close_stack[-1] and key == '0':# If supposed to be list
+                    com = False
+                    strng = False
+                    if value.endswith(','):
+                        value = value[:-1]
+                        com = True
+                    if value.startswith('"') and value.endswith('"'):
+                        value = value[1:-1]
+                        strng = True
+                    value += '$$$$'
+                    if strng:
+                        value = f'"{value}"'
+                    if com:
+                        value += ','
+                    
+                    new_lines.append(f'{n_indent}{value}')
+                    continue
+            if value.startswith('{'):# If starting new table
+                # Remember section
                 section.append((key, lidx))
+                # Find next line defining data
                 nidx = lidx+1
                 while nidx < len(lines):
                     nline = lines[nidx].strip()
                     if not nline.startswith('--'):
                         break
                     nidx += 1
+                # See if list or dictionary (has '=')
                 square = '=' not in nline
                 close_stack.append(square)
+                # change accordingly
                 if square:
                     value = value.replace('{', '[')
             line = f'{n_indent}"{key}": {value}'
-        elif '}' in line:
+        elif '}' in line:# End of section
             prev = new_lines[idx-1]
-            if prev.endswith(','):
+            if prev.endswith(','):# Remove unneeded trailing comma
                 new_lines[idx-1] = prev[:-1]
-            if close_stack.pop():
+            if close_stack.pop():# Close section type properly
                 line = line.replace('}', ']', 1)
             section.pop()
-        elif '{' in line:
+        elif '{' in line:# Start of new section but no index set
             section.append(('dict', lidx))
+            # Find next line defining data
             nidx = lidx+1
             while nidx < len(lines):
                 nline = lines[nidx].strip()
                 if not nline.startswith('--'):
                     break
                 nidx += 1
+            # See if list or dictionary (has '=')
             square = '=' not in nline
             close_stack.append(square)
+            # change accordingly
             if square:
                 line = line.replace('{', '[', 1)
         new_lines.append(line)
@@ -225,9 +248,10 @@ def dict_to_lang(data: dict, comments: dict) -> str:
             
             line = f'{indent}{key} = {value}'
         
-##        if '$$$$' in line:
-##            value = line.strip().replace('$$$$', '', 1)
-##            line = f'{indent}[0] = {value}'
+        # VK app has strange thing
+        if '$$$$' in line:
+            value = line.strip().replace('$$$$', '', 1)
+            line = f'{indent}[0] = {value}'
         new_lines.append(line)
     
     for _ in range(len(section)):

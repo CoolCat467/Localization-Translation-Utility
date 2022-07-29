@@ -12,7 +12,7 @@ from urllib.parse import urlencode
 import urllib.request
 from typing import Final, Any, Callable, Sequence
 
-import trio# type: ignore
+import trio
 import httpx
 
 import agents
