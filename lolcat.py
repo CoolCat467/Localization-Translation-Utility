@@ -41,39 +41,41 @@ class ResponseParser(HTMLParser):
         self.found = False
         self.value: Optional[str] = None
     
-    def handle_starttag(self, tag_type: str, attrs: list) -> None:
+    def handle_starttag(self, tag: str, attrs: list) -> None:
         "Set found to True if tag type and id matches search"
-        if tag_type == self.search_tag_type:
+        if tag == self.search_tag_type:
             creation = dict(attrs)
-            if not 'id' in creation:
+            if 'id' not in creation:
                 return
             if creation['id'] == self.search_id:
                 self.found = True
     
-    def handle_data(self, value: str):
+    def handle_data(self, data: str) -> None:
         "Set value to value if currently handling target"
         if self.found:
-            self.value = value
+            self.value = data
     
-    def handle_endtag(self, tag_type: str) -> None:
+    def handle_endtag(self, tag: str) -> None:
         "Set found to false if end of search tag"
-        if tag_type == self.search_tag_type and self.found:
+        if tag == self.search_tag_type and self.found:
             self.found = False
 
-def translate_sentance(sentance: str) -> str:
-    "Translate sentance"
+def translate_sentence(sentence: str) -> str:
+    "Translate sentence"
     browser = mechanicalsoup.StatefulBrowser()
     browser.open("https://funtranslations.com/lolcat")
     browser.select_form('form#textform')
-    browser["text"] = sentance
+    browser["text"] = sentence
     response = browser.submit_selected()
     
-    p = ResponseParser('span', 'lolcat')
-    p.feed(response.text)
-    p.close()
+    parser = ResponseParser('span', 'lolcat')
+    parser.feed(response.text)
+    parser.close()
     
-    value = p.value
-    if value.endswith(' ') and not sentance.endswith(' '):
+    value = parser.value
+    if value is None:
+        raise LookupError('Failed to find lolcat span in HTML response')
+    if value.endswith(' ') and not sentence.endswith(' '):
         value = value[:-1]
     
     while ' Srsly ' in value:
@@ -83,40 +85,43 @@ def translate_sentance(sentance: str) -> str:
             index -= 1
         value = value[:index] + value[index+7:]
     
-    if sentance[0].isupper():
+    if sentence[0].isupper():
         value = value[0].upper() + value[1:]
     
     return value.replace('.  ', '. ')
 
-def translate_block(sentances: list[str]) -> str:
-    "Translate sentances in bulk"
+def translate_block(sentences: list[str], threshold: int = 2048) -> list[str]:
+    "Translate sentences in bulk in batches if very big"
     sep = '^&^'
-    block = sep.join(sentances)
-    response = translate_sentance(block).split(sep)
     result = []
-    for orig, new in zip(sentances, response):
-        if orig[0].isupper():
-            new = new[0].upper() + new[1:]
-        result.append(new)
-##        print(f'{orig!r} -> {new!r}')
+    to_translate = list(reversed(sentences))
+    while to_translate:
+        block = ''
+        while to_translate and len(block) < threshold:
+            block += to_translate.pop() + sep
+        if not block:
+            break
+        block = block[:-len(sep)]
+        response = translate_sentence(block)
+        result += response.split(sep)
     return result
 
-def translate_file(english: dict) -> dict:
+def translate_file(english: dict, block_threshold: int = 2048) -> dict:
     "Translate an entire file."
-    keys, sentances = extricate.dict_to_list(english)
+    keys, sentences = extricate.dict_to_list(english)
     
-    results = translate_block(sentances)
+    results = translate_block(sentences, block_threshold)
     
-    for old, new in zip(enumerate(sentances), results):
-        idx, orig = old
+    for orig, new in zip(enumerate(sentences), results):
+        idx, old = orig
         if new is None or not isinstance(old, str):
-            results[idx] = orig
+            results[idx] = old
             continue
-        if orig.endswith(' ') and not new.endswith(' '):
+        if old.endswith(' ') and not new.endswith(' '):
             results[idx] = new + ' '
-    return extricate.list_to_dict(keys, results)
+    return extricate.list_to_dict(keys, results)# type: ignore
 
-def run():
+def run() -> None:
     "Run test of module"
     text = [
         'This is hearsay!',

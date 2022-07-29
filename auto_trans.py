@@ -8,9 +8,9 @@
 
 __title__ = 'Auto_Trans'
 __author__ = 'CoolCat467'
-__version__ = '2.1.0'
+__version__ = '2.2.0'
 __ver_major__ = 2
-__ver_minor__ = 1
+__ver_minor__ = 2
 __ver_patch__ = 0
 
 from typing import Any, Callable, Awaitable
@@ -27,7 +27,6 @@ import httpx
 import translate
 import convert
 import languages
-import timeutils
 import extricate
 
 import lolcat
@@ -67,39 +66,7 @@ async def translate_file(data: dict,
             results[idx] = orig
         elif orig.endswith(' ') and not new.endswith(' '):
             results[idx] = new + ' '
-    return extricate.list_to_dict(keys, results)
-
-def translate_file_copy_paste(data: dict) -> dict:
-    "Translate an entire file by creating text to paste into translator and reading the response"
-    keys, sentances = extricate.dict_to_list(data)
-    encoded = ' ###### '.join(sentances)
-    print()
-    print(encoded)
-    print()
-    raw_results = input('Paste result here: ')
-    results = raw_results.split(' ###### ')
-    return extricate.list_to_dict(keys, results)
-
-def translate_files_copy_paste(file_dict_list: list) -> list[dict]:
-    "Translate entire files by creating text to paste into translator and reading the response"
-    all_enc = []
-    all_keys = []
-    for data in file_dict_list:
-        keys, sentances = extricate.dict_to_list(data)
-        encoded = ' ###### '.join(sentances)
-        all_enc.append(encoded)
-        all_keys.append(keys)
-    print()
-    print(' &&&&&& '.join(all_enc))
-    print()
-    raw_results = input('Paste result here: ')
-    files = raw_results.split(' &&&&&& ')
-    results = []
-    for keys, enc_values in zip(all_keys, files):
-        values = enc_values.split(' ###### ')
-        results.append(extricate.list_to_dict(keys, values))
-    return results
-
+    return extricate.list_to_dict(keys, results)# type: ignore
 
 def raw_github_address(user: str, repo: str, branch: str, path: str) -> str:
     "Get raw GitHub user content URL of a specific file."
@@ -167,21 +134,6 @@ async def download_lang(path: str, cache_dir: str, client: httpx.AsyncClient) ->
     "Download file from MineOS repository and decode as lang file. Return dict and comments"
     return convert.lang_to_json(await download_file(path, cache_dir, client))
 
-def commonpath(paths: list) -> str:
-    "Given a sequence of path names, returns the longest common sub-path."
-    sub_paths = [p.split('/') for p in paths]
-    m_len = max(map(len, sub_paths))
-    long_sub: list[str] = []
-    c_long = -1
-    while c_long < m_len:
-        check = sub_paths[0][c_long+1]
-        for path in sub_paths[1:]:
-            if path[c_long+1] != check:
-                return '/'.join(long_sub)
-        c_long += 1
-        long_sub.append(check)
-    return '/'.join(long_sub)
-
 def split(path: str) -> tuple[str, str]:
     """Split a path name.  Returns tuple "(head, tail)" where "tail" is
 everything after the final slash.  Either part may be empty."""
@@ -197,29 +149,6 @@ def section_to_walk(section: list) -> tuple:
             dirs[path] = []
         dirs[path].append(filename)
     return tuple(dirs.items())
-
-##def find_groups(walk):
-##    dirs = {}
-##    go = False
-##    for dirpath, filenames in walk:
-##        from_base = commonpath(('/', dirpath))
-##        entry = dirpath[len(from_base):]
-##        
-##        follow = entry.split('/')
-##        if len(follow) > 1:
-##            if not follow[0] in dirs:
-##                dirs[follow[0]] = {}
-##            part = dirs[follow[0]]
-##            for link in follow[1:]:
-##                if not link in part:
-##                    part[link] = {}
-##                part = part[link]
-##            part[''] = filenames
-##        elif entry:
-##            dirs[entry] = {'': filenames}
-##        else:
-##            dirs[entry] = filenames
-##    return dirs
 
 async def translate_file_given_coro(
                          trans_coro: Callable[[dict[str,Any], str, str], Awaitable[dict[str, str]]],
@@ -317,7 +246,6 @@ async def abstract_translate(client: httpx.AsyncClient,
                 
                 real_filename = os.path.join(base_group, f'{fname}.lang')
                 if not os.path.exists(real_filename):
-##                if True:
                     lang_data.append((to_lang, real_filename))
                 else:
                     new_files += 1
@@ -337,7 +265,6 @@ async def abstract_translate(client: httpx.AsyncClient,
     
     print(f'Done! {new_files} new files created.')
 
-@timeutils.async_timed
 async def translate_main(client: httpx.AsyncClient) -> None:
     "Translate with google translate"
     
@@ -426,7 +353,6 @@ async def translate_broken_values(client: httpx.AsyncClient) -> None:
         modified = False
         for key in data:
             if data[key] == english[key] and english[key] != translated[key]:
-##                print(f'\n\n{folder = }\n{key = }')
                 print(f'{data[key]} -> {translated[key]}')
                 data[key] = translated[key]
                 modified = True
@@ -447,7 +373,7 @@ async def translate_lolcat(client: httpx.AsyncClient) -> None:
     cache_folder = os.path.join(here_folder, 'cache')
     
     def get_unhandled(handled: set[str], folder: str) -> set[str]:
-        return {'lolcat'} if not 'lolcat' in handled else set()
+        return {'lolcat'}# if not 'lolcat' in handled else set()
     
     async def trans_coro(english: dict,
                          to_lang: str,
@@ -460,8 +386,8 @@ async def translate_lolcat(client: httpx.AsyncClient) -> None:
 async def async_run() -> None:
     "Async entry point"
     async with httpx.AsyncClient(http2 = True) as client:
-        await translate_main(client)
-        await translate_broken_values(client)
+##        await translate_main(client)
+##        await translate_broken_values(client)
 ##        await translate_new_value(client, 'screenPreciseMode', 'Applications/Settings.app/Localizations')
         await translate_lolcat(client)
 
