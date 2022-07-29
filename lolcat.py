@@ -101,7 +101,7 @@ def translate_block(sentances: list[str]) -> str:
 ##        print(f'{orig!r} -> {new!r}')
     return result
 
-async def translate_file(english: dict) -> dict:
+def translate_file(english: dict) -> dict:
     "Translate an entire file."
     keys, sentances = extricate.dict_to_list(english)
     

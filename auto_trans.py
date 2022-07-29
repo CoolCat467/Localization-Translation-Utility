@@ -452,7 +452,7 @@ async def translate_lolcat(client: httpx.AsyncClient) -> None:
     async def trans_coro(english: dict,
                          to_lang: str,
                          folder: str) -> dict:
-        return await lolcat.translate_file(english)
+        return lolcat.translate_file(english)
     
     await abstract_translate(client, base_lang, cache_folder,
                              get_unhandled, trans_coro)
