@@ -14,6 +14,7 @@ __ver_minor__ = 4
 __ver_patch__ = 2
 
 import json
+from typing import Any
 
 def squish(text: str) -> str:
     "Remove all newlines and tabs from text"
@@ -32,22 +33,22 @@ def split_squished(squished_text: str) -> str:
     for char in squished_text:
         match char:
             case '{':
-                cline += char
+                cline  += char
                 cartrage_return()
                 indent += 1
             case '}':
                 cartrage_return()
-                cline += char
+                cline  += char
                 indent -= 1
             case ',':
-                cline += char
+                cline  += char
                 cartrage_return()
             case _:
-                cline += char
+                cline  += char
     cartrage_return()
     return ''.join(lines)[:-1]
 
-def lang_to_json(lang_data: str) -> tuple[dict, dict]:
+def lang_to_json(lang_data: str) -> tuple[dict[str, Any], dict[str, dict[int, str]]]:
     "Fix language data to be readable by json parser. Return data and comments."
     if not lang_data[-1]:
         lang_data = lang_data[:-1]
@@ -58,11 +59,11 @@ def lang_to_json(lang_data: str) -> tuple[dict, dict]:
     for lidx, line in enumerate(lines):
         if '{' in line and '}' in line:
             n_indent = line.count('\t')*'\t'
-            nline = line.replace('{', f'{{\n{n_indent}')
-            nline = nline.replace('}', f'\n{n_indent}}}')
-            data = nline.splitlines()
-            ndata = []
-            square = True
+            nline    = line.replace('{', f'{{\n{n_indent}')
+            nline    = nline.replace('}', f'\n{n_indent}}}')
+            data     = nline.splitlines()
+            ndata    = []
+            square   = True
             for dline in data[1:-1]:
                 dline = dline.strip()
                 if '=' in dline:
@@ -71,9 +72,9 @@ def lang_to_json(lang_data: str) -> tuple[dict, dict]:
                     value = value.strip()
                     if not square:
                         key, value = value.split('=')
-                        key = key.strip()
-                        value = value.strip()
-                        value = f'{key} = {value}'
+                        key        = key.strip()
+                        value      = value.strip()
+                        value      = f'{key} = {value}'
                     ndata.append(f'{n_indent}\t{value}')
             nline = '\n'.join((data[0], ',\n'.join(ndata), data[-1]))
             new_lines += nline.splitlines()
@@ -136,7 +137,7 @@ def lang_to_json(lang_data: str) -> tuple[dict, dict]:
                     strng = False
                     if value.endswith(','):
                         value = value[:-1]
-                        com = True
+                        com   = True
                     if value.startswith('"') and value.endswith('"'):
                         value = value[1:-1]
                         strng = True
@@ -191,12 +192,13 @@ def lang_to_json(lang_data: str) -> tuple[dict, dict]:
 ##    print('\n'.join(new_lines))
     return json.loads('\n'.join(new_lines)), comments
 
-def dict_to_lang(data: dict, comments: dict) -> str:
+def dict_to_lang(data: dict[str, Any],
+                 comments: dict[str, dict[int, str]]) -> str:
     "Convert data and comments to MineOS file data"
     json_data = json.dumps(data, ensure_ascii=False,
                            indent='\t', separators=(',', ' = '))
     new_lines: list[str] = []
-    section: list[tuple[str, int]] = [('null', 0)]
+    section  : list[tuple[str, int]] = [('null', 0)]
     for line in json_data.splitlines():
         idx = len(new_lines)
 
@@ -222,9 +224,9 @@ def dict_to_lang(data: dict, comments: dict) -> str:
                 for offset, comment in comments[path].items():
                     pos = sec_start + offset
                     if pos >= len(new_lines):
-                        indent = ''
+                        indent  = ''
                     else:
-                        indent = new_lines[pos].count('\t')*'\t'
+                        indent  = new_lines[pos].count('\t')*'\t'
                     if comment:
                         comment = f'{indent}-- {comment}'
                     else:
@@ -255,9 +257,9 @@ def dict_to_lang(data: dict, comments: dict) -> str:
             for offset, comment in comments[path].items():
                 pos = sec_start + offset
                 if pos >= len(new_lines):
-                    indent = ''
+                    indent  = ''
                 else:
-                    indent = new_lines[pos].count('\t')*'\t'
+                    indent  = new_lines[pos].count('\t')*'\t'
 
                 if comment:
                     comment = f'{indent}-- {comment}'
@@ -267,9 +269,9 @@ def dict_to_lang(data: dict, comments: dict) -> str:
 
     return '\n'.join(new_lines)
 
-def update_comment_positions(original_pos: dict,
-                             new_data: dict,
-                             old_data: dict) -> dict[str, dict[int, str]]:
+def update_comment_positions(original_pos: dict[str, dict[int, str]],
+                             new_data: dict[str, Any],
+                             old_data: dict[str, Any]) -> dict[str, dict[int, str]]:
     "Update comment positions"
     # Get json text of files
     old_json = json.dumps(old_data, indent='\t').splitlines()
@@ -325,13 +327,15 @@ def update_comment_positions(original_pos: dict,
                 new_comments[section][new_pos-nbs] = original_pos[section][offset]
     return new_comments
 
-def read_lang_file(filepath: str) -> tuple[dict, dict]:
+def read_lang_file(filepath: str) -> tuple[dict[str, Any], dict[str, dict[int, str]]]:
     "Read MineOS data file"
     with open(filepath, 'r', encoding='utf-8') as file_point:
         fdata = file_point.read()
     return lang_to_json(fdata)
 
-def write_lang_file(filepath: str, data: dict, comments: dict) -> None:
+def write_lang_file(filepath: str,
+                    data: dict[str, Any],
+                    comments: dict[str, dict[int, str]]) -> None:
     "Write MineOS data file"
     with open(filepath, 'w', encoding='utf-8') as file_point:
         file_point.write(dict_to_lang(data, comments))
