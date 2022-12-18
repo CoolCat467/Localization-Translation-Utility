@@ -190,7 +190,11 @@ def lang_to_json(lang_data: str) -> tuple[dict[str, Any], dict[str, dict[int, st
                 line = line.replace('{', '[', 1)
         new_lines.append(line)
 ##    print('\n'.join(new_lines))
-    return json.loads('\n'.join(new_lines)), comments
+    try:
+        return json.loads('\n'.join(new_lines)), comments
+    except json.decoder.JSONDecodeError:
+        print('\n'.join(new_lines))
+        raise
 
 def dict_to_lang(data: dict[str, Any],
                  comments: dict[str, dict[int, str]]) -> str:

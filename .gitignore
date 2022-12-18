@@ -1,3 +1,7 @@
+# Files created by program
+cache/
+Upload/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

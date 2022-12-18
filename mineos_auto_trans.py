@@ -55,14 +55,14 @@ import lolcat
 async def translate_file(data: dict,
                          client: httpx.AsyncClient,
                          to_lang: str,
-                         src_lang: str='auto') -> dict:
+                         src_lang: str = 'auto') -> dict:
     "Translate an entire file."
     keys, sentances = extricate.dict_to_list(data)
     results = await translate.translate_async(client, sentances,
                                               to_lang, src_lang)
     for old, new in zip(enumerate(sentances), results):
         idx, orig = old
-        if new is None or not isinstance(old, str):
+        if new is None or not isinstance(orig, str):
             results[idx] = orig
         elif orig.endswith(' ') and not new.endswith(' '):
             results[idx] = new + ' '
@@ -195,12 +195,11 @@ async def abstract_translate(client: httpx.AsyncClient,
     # Get true copy
     orig_files = copy.deepcopy(files)
     
-    search = []
+    search: set[str] = set()
     for section, data in files.items():
         for entry in data:
             if isinstance(entry, str) and entry.endswith('English.lang'):
-                search.append(section)
-                break
+                search.add(section)
     
     print(f'\nSections with English.lang files: {", ".join(search)}\n')
     
@@ -208,6 +207,8 @@ async def abstract_translate(client: httpx.AsyncClient,
     
     for section in search:
         lang_files = [f for f in files[section] if isinstance(f, str) and f.endswith('.lang')]
+        if section == 'localizations':
+            lang_files += [f'Installer/{f}' for f in lang_files]
         if not lang_files:
             continue
         print('#'*0x20+section+'#'*0x20)
@@ -231,7 +232,9 @@ async def abstract_translate(client: httpx.AsyncClient,
             base_group = os.path.join(base_lang, real_folder)
             total = len(unhandled)
             print(f'\n{total} languages do not exist, translating them now!')
-            insert_start = files[section].index(last_handled)
+##            print(f'{lang_files = }')
+            insert_start = lang_files.index(last_handled)
+##            insert_start = files[section].index(last_handled)
             
             lang_data = []
             
@@ -242,6 +245,8 @@ async def abstract_translate(client: httpx.AsyncClient,
                 fname = fname.replace('(', '').replace(')', '')
                 section_filename = f'{folder}/{fname}.lang'
                 if not section_filename in files[section]:
+                    if folder == 'Installer/Localizations':
+                        continue
                     files[section].insert(insert_start+idx, section_filename)
                 
                 real_filename = os.path.join(base_group, f'{fname}.lang')
@@ -322,6 +327,20 @@ async def translate_new_value(client: httpx.AsyncClient, key: str, folder: str) 
                              get_unhandled, trans_coro)
 
 
+def fix_translation(original: str, value: str) -> str:
+    "Fix translation"
+    if original.strip()[0].isupper():
+        if ' ' in value:
+            pre, end = value.split(' ', 1)
+            value = f'{pre.title()} {end}'
+    if original.startswith(' ') and not value.startswith(' '):
+        value = ' '+value
+    if original.endswith(' ') and not value.endswith(' '):
+        value += ' '
+    if original in {' mm Hg', 'http://example.com/something.lua'}:
+        return original
+    return value
+
 async def translate_broken_values(client: httpx.AsyncClient) -> None:
     "Translate with google translate"
     
@@ -330,6 +349,8 @@ async def translate_broken_values(client: httpx.AsyncClient) -> None:
     cache_folder = os.path.join(here_folder, 'cache')
     
     def get_unhandled(handled: set[str], lang_folder: str) -> set[str]:
+        if 'Localizations' not in lang_folder:
+            return set()
         return handled.difference({'chinese (traditional)',
                                    'english',
                                    'lolcat'})
@@ -348,14 +369,28 @@ async def translate_broken_values(client: httpx.AsyncClient) -> None:
         
         code = languages.LANGCODES[to_lang]
         
-        translated = await translate_file(english, client, code, 'en')
+##        translated = await translate_file(english, client, code, 'en')
+        async def translate_single(key: str) -> None:
+            "Translate single value"
+##            print(f'{english[key] = }')
+            if not isinstance(english[key], str):
+                return
+            value = await translate.get_translated_coroutine(
+                client, english[key], code, 'en'
+            )
+            value = fix_translation(english[key], value)
+            if value != data[key]:
+                print(f'{data[key]!r} -> {value!r}')
+            data[key] = value
         
         modified = False
-        for key in data:
-            if data[key] == english[key] and english[key] != translated[key]:
-                print(f'{data[key]} -> {translated[key]}')
-                data[key] = translated[key]
-                modified = True
+        async with trio.open_nursery() as nursery:
+            for key in data:
+                if data[key] == english[key] or key == data[key]:
+##                    print(f'{data[key]!r} -> {translated[key]!r}')
+##                    data[key] = translated[key]
+                    nursery.start_soon(translate_single, key)
+                    modified = True
         
         if modified:
             return data
@@ -387,13 +422,14 @@ async def async_run() -> None:
     "Async entry point"
     async with httpx.AsyncClient(http2 = True) as client:
 ##        await translate_main(client)
-##        await translate_broken_values(client)
+        await translate_broken_values(client)
 ##        await translate_new_value(client, 'screenPreciseMode', 'Applications/Settings.app/Localizations')
-        await translate_lolcat(client)
+##        await translate_lolcat(client)
 
 def run() -> None:
     "Main entry point"
-    trio.run(async_run)
+##    import trio.testing
+    trio.run(async_run)#, clock=trio.testing.MockClock(autojump_threshold=0))
 
 if __name__ == '__main__':
     print(f'{__title__} v{__version__}\nProgrammed by {__author__}.')

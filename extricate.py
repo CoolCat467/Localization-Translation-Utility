@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Extricate - Take apart dictionaries
+# Extricate - Take apart and put back together dictionaries
 
 "Take apart dictionaries"
 
@@ -8,17 +8,29 @@
 
 __title__ = 'Extricate'
 __author__ = 'CoolCat467'
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 
-from typing import Any, Callable, Final
+from typing import Any, Callable, Final, Collection
+
 
 def wrap_quotes(text: str, quotes: str = '"') -> str:
     "Return text wrapped in quotes"
     return f'{quotes}{text}{quotes}'
 
+
 def unwrap_quotes(text: str, layers: int = 1) -> str:
     "Unwrap given layers of quotes"
     return text[layers:-layers]
+
+
+def list_or(values: Collection[str]) -> str:
+    "Return comma separated listing of values joined with ` or `"
+    if len(values) <= 2:
+        return ' or '.join(values)
+    copy = list(values)
+    copy[-1] = f'or {copy[-1]}'
+    return ', '.join(copy)
+
 
 TYPE_CHAR: Final = {
     'str': '!',
@@ -26,17 +38,17 @@ TYPE_CHAR: Final = {
     'float': '#',
     'bool': '$',
     'dict': '%',
-    'list': '^'
+    'list': '^',
+    'NoneType': '&',
 }
 CHAR_TYPE: Final = {v:k for k, v in TYPE_CHAR.items()}
 
-SEP: Final = '&'
+SEP: Final = '*'
 
-def dict_to_list(data: dict | list | str | int,
-                 ) -> tuple[list[str], list[str]]:
+
+def dict_to_list(data: Any) -> tuple[list[str], list[str]]:
     "Convert dictionary to two lists, one of keys, one of values."
-    def read_block(data: dict | list | str | int
-                   ) -> tuple[list[str], list[str]]:
+    def read_block(data: Any) -> tuple[list[str], list[str]]:
         "Read block"
         keys: list[str] = []
         values: list[str] = []
@@ -44,10 +56,19 @@ def dict_to_list(data: dict | list | str | int,
         match type(data).__name__:
             case 'dict' as dtype:
                 assert isinstance(data, dict)  # Mypy doesn't understand
+                # If empty dict
+                if not data:
+                    keys.append(wrap_quotes(f'{SEP}', TYPE_CHAR[dtype]))
+                    values.append('')
+                # Will not run if no data to enumerate
                 for key, value in data.items():
                     # Ensure key won't break everything
-                    if not set(str(key)).isdisjoint(set(CHAR_TYPE) | {SEP}):
-                        raise ValueError('Dict key contains a CHAR_TYPE value')
+                    intersect = set(str(key)) & (set(CHAR_TYPE) | {SEP})
+                    if intersect:
+                        raise ValueError(
+                            'Dict key contains CHAR_TYPE value(s) "'
+                            f"{''.join(intersect)}"+'"'
+                        )
 
                     key = wrap_quotes(key, TYPE_CHAR[type(key).__name__])
                     for block_k, block_v in zip(*read_block(value)):
@@ -56,18 +77,26 @@ def dict_to_list(data: dict | list | str | int,
                         values.append(block_v)
             case 'list' as dtype:
                 assert isinstance(data, list)  # Mypy doesn't understand
+                # If empty list
+                if not data:
+                    keys.append(wrap_quotes(f'{SEP}', TYPE_CHAR[dtype]))
+                    values.append('')
+                # Will not run if no data to enumerate
                 for key, value in enumerate(data):
                     for block_k, block_v in zip(*read_block(value)):
                         keys.append(wrap_quotes(f'{key}{SEP}{block_k}',
                                                 TYPE_CHAR[dtype]))
                         values.append(block_v)
-            case 'str' | 'int' | 'bool' | 'float' as dtype:
+            case 'str' | 'int' | 'bool' | 'float' | 'NoneType' as dtype:
                 keys.append(wrap_quotes('', TYPE_CHAR[dtype]))
                 values.append(str(data))
             case _ as dtype:
-                raise TypeError(f'Expected dict, list, or str, got "{dtype}"')
+                raise TypeError(
+                    f'Expected type {list_or(TYPE_CHAR)}, got "{dtype}"'
+                )
         return keys, values
     return read_block(data)
+
 
 class Segment:
     "Segment with item. Basically like a pointer"
@@ -76,7 +105,9 @@ class Segment:
         self.item = item
 
     def __repr__(self) -> str:
-        return f'<S {self.item!r}>'
+        if self.item is None:
+            return 'Segment()'
+        return f'Segment({self.item!r})'
 
     def is_container(self) -> bool:
         "Return if is container"
@@ -108,8 +139,8 @@ class Segment:
             case _ as dtype:
                 raise ValueError(f'Expected dict or list, got "{dtype}"')
 
-def list_to_dict(keys: list[str], values: list[str]
-                 ) -> dict[int | str, dict | list | str] | list[str | int] | str | int:
+
+def list_to_dict(keys: list[str], values: list[str]) -> Any:
     "Convert split lists of compiled keys and values back into dictionary"
     def handle_map(segment: Segment,
                    key: str,
@@ -136,28 +167,30 @@ def list_to_dict(keys: list[str], values: list[str]
                     segment.item = {}
                 raw_key, index = unwrap_quotes(key).split(SEP, 1)
 
-                dkey: int | str
-                if not raw_key[0] in CHAR_TYPE:
-                    raise ValueError(f'Key type character "{raw_key[0]}" unrecognized')
-                match CHAR_TYPE[raw_key[0]]:
-                    case 'str':
-                        dkey = unwrap_quotes(raw_key)
-                    case 'int':
-                        dkey = int(unwrap_quotes(raw_key))
-                    case _ as dtype:
-                        raise TypeError(f'Expected str or int, got "{dtype}"')
+                if raw_key:
+                    dkey: int | str
+                    if not raw_key[0] in CHAR_TYPE:
+                        raise ValueError(f'Key type character "{raw_key[0]}" unrecognized')
+                    match CHAR_TYPE[raw_key[0]]:
+                        case 'str':
+                            dkey = unwrap_quotes(raw_key)
+                        case 'int':
+                            dkey = int(unwrap_quotes(raw_key))
+                        case _ as dtype:
+                            raise TypeError(f'Expected str or int, got "{dtype}"')
 
-                if not dkey in segment.item:
-                    segment.item[dkey] = Segment()
-                unwrap_key(segment.item[dkey], index, value)
+                    if not dkey in segment.item:
+                        segment.item[dkey] = Segment()
+                    unwrap_key(segment.item[dkey], index, value)
             case 'list':
                 if not isinstance(segment.item, list):
                     segment.item = []
                 indice_str, index = unwrap_quotes(key).split(SEP, 1)
-                indice = int(indice_str)
-                while indice >= len(segment.item):
-                    segment.item.append(Segment())
-                unwrap_key(segment.item[indice], index, value)
+                if indice_str:
+                    indice = int(indice_str)
+                    while indice >= len(segment.item):
+                        segment.item.append(Segment())
+                    unwrap_key(segment.item[indice], index, value)
             case 'str':
                 handle_map(segment, key, value, str)
             case 'int':
@@ -166,12 +199,17 @@ def list_to_dict(keys: list[str], values: list[str]
                 handle_map(segment, key, value, bool)
             case 'float':
                 handle_map(segment, key, value, float)
+            case 'NoneType':
+                handle_map(segment, key, value, lambda x: None)
             case _ as dtype:
-                raise TypeError(f'Expected dict, list, str, or int, got "{dtype}"')
+                raise TypeError(
+                    f'Expected type {list_or(TYPE_CHAR)}, got "{dtype}"'
+                )
     data = Segment()
     for key, value in zip(keys, values):
         unwrap_key(data, key, value)
     return data.unwrap()
+
 
 def run() -> None:
     "Run test of module"
@@ -185,9 +223,16 @@ def run() -> None:
             ],
             4: [
                 'cat',
-                {# Does not work
+                {
                     'meep': 'e',
-                    'a': 3
+                    'a': 3,
+                    '': [
+                        235,
+                        'woe',
+                        [],
+                        None,
+                        {}
+                    ]
                 }
             ]
         },

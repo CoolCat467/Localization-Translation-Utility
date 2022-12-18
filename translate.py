@@ -6,23 +6,27 @@
 __title__ = 'Tiny tranlator module'
 __author__ = 'CoolCat467'
 
+
+from typing import Final, Any, Sequence
+
 import json
 import random
 from urllib.parse import urlencode
 import urllib.request
-from typing import Final, Any, Callable, Sequence
 
 import trio
 import httpx
 
 import agents
 
+
 TIMEOUT: Final[int] = 4
 AGENT = random.randint(0, 100000)
 
-async def gather(*tasks: Sequence) -> list:
+
+async def gather(*tasks: Sequence[Any]) -> list[Any]:
     "Gather for trio."
-    async def collect(index: int, task: list, results: dict[int, Any]) -> None:
+    async def collect(index: int, task: list[Any], results: dict[int, Any]) -> None:
         task_func, *task_args = task
         results[index] = await task_func(*task_args)
     
@@ -32,60 +36,71 @@ async def gather(*tasks: Sequence) -> list:
             nursery.start_soon(collect, index, task, results)
     return [results[i] for i in range(len(tasks))]
 
-##def get_translation_url(sentance: str, to_language: str, source_language: str='auto') -> str:
+
+##def get_translation_url(sentence: str, to_language: str, source_language: str='auto') -> str:
 ##    "Return the url you should visit to get query translated to language to_language."
 ##    query = {'client': 'dict-chrome-ex',
 ##             'sl'    : source_language,
 ##             'tl'    : to_language,
-##             'q'     : sentance}
+##             'q'     : sentence}
 ##    return 'http://clients5.google.com/translate_a/t?'+urlencode(query)
 
-def get_translation_url(sentance: str, to_language: str, source_language: str='auto') -> str:
-    "Return the url you should visit to get query translated to language to_language."
+
+def get_translation_url(sentence: str,
+                        to_language: str,
+                        source_language: str = 'auto') -> str:
+    "Return the URL you should visit to get query translated to language to_language."
     query = {'client': 'gtx',
              'dt'    : 't',
              'sl'    : source_language,
              'tl'    : to_language,
-             'q'     : sentance}
+             'q'     : sentence}
     return 'https://translate.googleapis.com/translate_a/single?'+urlencode(query)
 
-def process_response(result: list) -> str:
+
+def process_response(result: list[str] | list[list[Any]]) -> str:
     "Return string after processing response."
-##    return result[0]
     part = result
     while isinstance(part, list):
-        part = part[0]
-    return part
+        next_ = part[0]
+        if isinstance(next_, list):
+            part = next_
+        elif isinstance(next_, str):
+            return next_
+    return part  # type: ignore[unreachable]
+
 
 def is_url(text: str) -> bool:
-    "Return True if text is probably a url."
+    "Return True if text is probably a URL."
     return text.startswith('http') and '://' in text and '.' in text and not ' ' in text
 
-def translate_sync(sentance: str, to_lang: str, source_lang: str='auto') -> str:
-    "Syncronously preform translation of sentance from source_lang to to_lang"
-    if isinstance(sentance, int) or is_url(sentance):
-        # skip numbers and urls
-        return sentance
+
+def translate_sync(sentence: str | int, to_lang: str, source_lang: str='auto') -> str | int:
+    "Synchronously preform translation of sentence from source_lang to to_lang"
+    if isinstance(sentence, int) or is_url(sentence):
+        # skip numbers and URLs
+        return sentence
     
-    # Get url from function, which uses urllib to generate proper query
-    url = get_translation_url(sentance, to_lang, source_lang)
+    # Get URL from function, which uses urllib to generate proper query
+    url = get_translation_url(sentence, to_lang, source_lang)
     with urllib.request.urlopen(url, timeout=0.5) as file:
         request_result = json.loads(file.read())
     return process_response(request_result)
 
+
 async def get_translated_coroutine(client: httpx.AsyncClient,
-                                   sentance: str, to_lang: str,
-                                   source_lang: str='auto') -> str:
-    "Return the sentance translated, asyncronously."
+                                   sentence: str | int, to_lang: str,
+                                   source_lang: str='auto') -> str | int:
+    "Return the sentence translated, asynchronously."
     global AGENT# pylint: disable=global-statement
     
-    if isinstance(sentance, int) or is_url(sentance):
-        # skip numbers and urls
-        return sentance
+    if isinstance(sentence, int) or is_url(sentence):
+        # skip numbers and URLs
+        return sentence
     # Make sure we have a timeout, so that in the event of network failures
     # or something code doesn't get stuck
-    # Get url from function, which uses urllib to generate proper query
-    url = get_translation_url(sentance, to_lang, source_lang)
+    # Get URL from function, which uses urllib to generate proper query
+    url = get_translation_url(sentence, to_lang, source_lang)
     
     headers = {
         'User-Agent': '',
@@ -100,62 +115,27 @@ async def get_translated_coroutine(client: httpx.AsyncClient,
         headers['User-Agent'] = agents.USER_AGENTS[AGENT]
         
         try:
-            # Go to that url and get our translated response
+            # Go to that URL and get our translated response
             response = await client.get(url, headers=headers)
             # Wait for our response and make it json so we can look at
             # it like a dictionary
             return process_response(response.json())
         except httpx.ConnectTimeout:
             pass
+        except json.decoder.JSONDecodeError:
+            print(f'{type(response) = }')
+            print(f'{response = }')
+            raise
+
 
 async def translate_async(client: httpx.AsyncClient,
-                          sentances: list, to_lang: str,
-                          source_lang: str) -> list:
-    "Translate multiple sentances asyncronously."
-    coros = [(get_translated_coroutine, client, q, to_lang, source_lang) for q in sentances]
+                          sentences: list[str | int], to_lang: str,
+                          source_lang: str) -> list[str | int]:
+    "Translate multiple sentences asynchronously."
+    coros = [(get_translated_coroutine, client, q, to_lang, source_lang)
+             for q in sentences]
     return await gather(*coros)
 
-##def run() -> None:
-##    "Demonstrate code usage and the power of asynchronous code."    
-##    # Quick make a nice little function stopwatch wrapper
-##    # pylint: disable=import-outside-toplevel
-##    import time
-##    from functools import wraps
-##    
-##    def timed(func) -> Callable[..., Any]:
-##        @wraps(func)
-##        def time_func(*args, **kwargs) -> Any:
-##            start = time.perf_counter()
-##            result = func(*args, **kwargs)
-##            stop = time.perf_counter()
-##            print(f'\n{func.__name__} took {stop-start:.4f} secconds.\n')
-##            return result
-##        return time_func
-##    
-##    # Get a bunch of sentances to translate
-##    sentances = ['Good morning', 'I would like to buy a muffin', 'bye']
-##    # Tell the person watching us what they are
-##    print('\nWe will be translating the following sentances...\n')
-##    print('\n'.join(sentances)+'\n')
-##    # We will be translating from english to french
-##    src_lang = 'en'
-##    dst_lang = 'fr'
-##    
-##    print(f'... to the language corrosponding with language code "{dst_lang}".\n')
-##    
-##    # Define two functions, one that translates our sentances one at a time (normaly)
-##    @timed
-##    def without_async() -> None:
-##        print('\n'.join(translate_sync(sentance, dst_lang, src_lang) for sentance in sentances))
-##    # and another that does it all asyncronously, both timed.
-####    @timed
-####    def with_async() -> None:
-####        timeout = 1.5
-####        print('\n'.join(translate_sentances(sentances, dst_lang, src_lang, timeout)))
-##    
-##    without_async()
-####    with_async()
 
 if __name__ == '__main__':
     print(f'{__title__} \nProgrammed by {__author__}.')
-##    run()
