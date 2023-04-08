@@ -3,22 +3,20 @@
 
 "Tiny translator module"
 
-__title__ = 'Tiny tranlator module'
-__author__ = 'CoolCat467'
+__title__ = "Tiny tranlator module"
+__author__ = "CoolCat467"
 
-
-from typing import Final, Any, Sequence
 
 import json
 import random
-from urllib.parse import urlencode
 import urllib.request
+from typing import Any, Final, Sequence
+from urllib.parse import urlencode
 
-import trio
 import httpx
+import trio
 
 import agents
-
 
 TIMEOUT: Final[int] = 4
 AGENT = random.randint(0, 100000)
@@ -26,10 +24,11 @@ AGENT = random.randint(0, 100000)
 
 async def gather(*tasks: Sequence[Any]) -> list[Any]:
     "Gather for trio."
+
     async def collect(index: int, task: list[Any], results: dict[int, Any]) -> None:
         task_func, *task_args = task
         results[index] = await task_func(*task_args)
-    
+
     results: dict[int, Any] = {}
     async with trio.open_nursery() as nursery:
         for index, task in enumerate(tasks):
@@ -46,16 +45,18 @@ async def gather(*tasks: Sequence[Any]) -> list[Any]:
 ##    return 'http://clients5.google.com/translate_a/t?'+urlencode(query)
 
 
-def get_translation_url(sentence: str,
-                        to_language: str,
-                        source_language: str = 'auto') -> str:
+def get_translation_url(
+    sentence: str, to_language: str, source_language: str = "auto"
+) -> str:
     "Return the URL you should visit to get query translated to language to_language."
-    query = {'client': 'gtx',
-             'dt'    : 't',
-             'sl'    : source_language,
-             'tl'    : to_language,
-             'q'     : sentence}
-    return 'https://translate.googleapis.com/translate_a/single?'+urlencode(query)
+    query = {
+        "client": "gtx",
+        "dt": "t",
+        "sl": source_language,
+        "tl": to_language,
+        "q": sentence,
+    }
+    return "https://translate.googleapis.com/translate_a/single?" + urlencode(query)
 
 
 def process_response(result: list[str] | list[list[Any]]) -> str:
@@ -72,15 +73,17 @@ def process_response(result: list[str] | list[list[Any]]) -> str:
 
 def is_url(text: str) -> bool:
     "Return True if text is probably a URL."
-    return text.startswith('http') and '://' in text and '.' in text and not ' ' in text
+    return text.startswith("http") and "://" in text and "." in text and not " " in text
 
 
-def translate_sync(sentence: str | int, to_lang: str, source_lang: str='auto') -> str | int:
+def translate_sync(
+    sentence: str | int, to_lang: str, source_lang: str = "auto"
+) -> str | int:
     "Synchronously preform translation of sentence from source_lang to to_lang"
     if isinstance(sentence, int) or is_url(sentence):
         # skip numbers and URLs
         return sentence
-    
+
     # Get URL from function, which uses urllib to generate proper query
     url = get_translation_url(sentence, to_lang, source_lang)
     with urllib.request.urlopen(url, timeout=0.5) as file:
@@ -88,12 +91,15 @@ def translate_sync(sentence: str | int, to_lang: str, source_lang: str='auto') -
     return process_response(request_result)
 
 
-async def get_translated_coroutine(client: httpx.AsyncClient,
-                                   sentence: str | int, to_lang: str,
-                                   source_lang: str='auto') -> str | int:
+async def get_translated_coroutine(
+    client: httpx.AsyncClient,
+    sentence: str | int,
+    to_lang: str,
+    source_lang: str = "auto",
+) -> str | int:
     "Return the sentence translated, asynchronously."
-    global AGENT# pylint: disable=global-statement
-    
+    global AGENT  # pylint: disable=global-statement
+
     if isinstance(sentence, int) or is_url(sentence):
         # skip numbers and URLs
         return sentence
@@ -101,19 +107,19 @@ async def get_translated_coroutine(client: httpx.AsyncClient,
     # or something code doesn't get stuck
     # Get URL from function, which uses urllib to generate proper query
     url = get_translation_url(sentence, to_lang, source_lang)
-    
+
     headers = {
-        'User-Agent': '',
-        'Accept': '*/*',
-        'Accept-Language': 'en-US,en-GB; q=0.5',
-        'Accept-Encoding': 'gzip, deflate',
-        'Connection': 'keep-alive'
+        "User-Agent": "",
+        "Accept": "*/*",
+        "Accept-Language": "en-US,en-GB; q=0.5",
+        "Accept-Encoding": "gzip, deflate",
+        "Connection": "keep-alive",
     }
-    
+
     while True:
         AGENT = (AGENT + 1) % len(agents.USER_AGENTS)
-        headers['User-Agent'] = agents.USER_AGENTS[AGENT]
-        
+        headers["User-Agent"] = agents.USER_AGENTS[AGENT]
+
         try:
             # Go to that URL and get our translated response
             response = await client.get(url, headers=headers)
@@ -123,19 +129,39 @@ async def get_translated_coroutine(client: httpx.AsyncClient,
         except httpx.ConnectTimeout:
             pass
         except json.decoder.JSONDecodeError:
-            print(f'{type(response) = }')
-            print(f'{response = }')
+            print(f"{type(response) = }")
+            print(f"{response = }")
             raise
 
 
-async def translate_async(client: httpx.AsyncClient,
-                          sentences: list[str | int], to_lang: str,
-                          source_lang: str) -> list[str | int]:
+async def translate_async(
+    client: httpx.AsyncClient,
+    sentences: list[str | int],
+    to_lang: str,
+    source_lang: str,
+) -> list[str | int]:
     "Translate multiple sentences asynchronously."
-    coros = [(get_translated_coroutine, client, q, to_lang, source_lang)
-             for q in sentences]
+    coros = [
+        (get_translated_coroutine, client, q, to_lang, source_lang) for q in sentences
+    ]
     return await gather(*coros)
 
 
-if __name__ == '__main__':
-    print(f'{__title__} \nProgrammed by {__author__}.')
+async def async_run() -> None:
+    "Async entry point"
+    async with httpx.AsyncClient(http2=True) as client:
+        input_ = ["cat is bob", "bob is a potatoe"]
+        print(f"{input_ = }")
+        result = await translate_async(client, input_, "fr", "en")
+        print(f"{result = }")
+
+
+def run() -> None:
+    "Main entry point"
+    # import trio.testing
+    trio.run(async_run)  # , clock=trio.testing.MockClock(autojump_threshold=0))
+
+
+if __name__ == "__main__":
+    print(f"{__title__} \nProgrammed by {__author__}.")
+    run()
