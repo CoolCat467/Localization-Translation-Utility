@@ -67,12 +67,12 @@ async def download_file(
         response = await download_coroutine(client, nanosaur_url(path))
         ##        j_resp = json.loads(response)
         ##        data = base64.b64decode(j_resp['content'])
-        with open(real_path, "wb") as file:
+        with open(real_path, "wb") as file:  # noqa: ASYNC101
             file.write(response)
         await trio.sleep(1)
         return response.decode("utf-8")
     print(f"Loaded {path} from cache")
-    with open(real_path, encoding="utf-8") as file:
+    with open(real_path, encoding="utf-8") as file:  # noqa: ASYNC101
         return file.read()
 
 
@@ -95,7 +95,7 @@ async def translate_file(
     )
     for idx, value in insert.items():
         results.insert(idx, value)
-    for old, new in zip(enumerate(sentences), results):
+    for old, new in zip(enumerate(sentences), results, strict=True):
         idx, orig = old
         if orig.endswith(" ") and not new.endswith(" "):
             results[idx] = new + " "
@@ -123,7 +123,7 @@ def read_nanosaur_localization(csv_file: io.IOBase) -> dict[str, list[str]]:
     names = csv_file.readline().strip().split(",")
     reader = csv.reader(csv_file, dialect="nanosaur")
     languages: dict[str, list[str]] = {name: [] for name in names}
-    for _ in zip(range(len(names)), reader):
+    for _ in zip(range(len(names)), reader, strict=False):
         continue
     for row in reader:
         if not row:

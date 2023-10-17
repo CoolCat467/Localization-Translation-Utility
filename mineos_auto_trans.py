@@ -60,7 +60,7 @@ async def translate_file(
     results = await translate.translate_async(
         client, sentences, to_lang, src_lang
     )
-    for old, new in zip(enumerate(sentences), results):
+    for old, new in zip(enumerate(sentences), results, strict=True):
         idx, orig = old
         if new is None or not isinstance(orig, str):
             results[idx] = orig
@@ -130,12 +130,12 @@ async def download_file(
         response = await download_coroutine(client, mineos_url(path))
         ##        j_resp = json.loads(response)
         ##        data = base64.b64decode(j_resp['content'])
-        with open(real_path, "wb") as file:
+        with open(real_path, "wb") as file:  # noqa: ASYNC101
             file.write(response)
         await trio.sleep(1)
         return response.decode("utf-8")
     print(f"Loaded {path} from cache")
-    with open(real_path, encoding="utf-8") as file:
+    with open(real_path, encoding="utf-8") as file:  # noqa: ASYNC101
         return file.read()
 
 

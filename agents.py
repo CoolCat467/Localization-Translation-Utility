@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 ##MIT License
 ##
@@ -7543,4 +7542,4 @@ USER_AGENTS = [
 
 def get_agent() -> str:
     "Return random user agent"
-    return random.choice(USER_AGENTS)
+    return random.choice(USER_AGENTS)  # noqa: S311

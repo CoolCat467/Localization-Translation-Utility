@@ -72,7 +72,9 @@ def dict_to_list(data: Any) -> tuple[list[str], list[str]]:
                         )
 
                     key = wrap_quotes(key, TYPE_CHAR[type(key).__name__])
-                    for block_k, block_v in zip(*read_block(value)):
+                    for block_k, block_v in zip(
+                        *read_block(value), strict=True
+                    ):
                         keys.append(
                             wrap_quotes(
                                 f"{key}{SEP}{block_k}", TYPE_CHAR[dtype]
@@ -87,7 +89,9 @@ def dict_to_list(data: Any) -> tuple[list[str], list[str]]:
                     values.append("")
                 # Will not run if no data to enumerate
                 for key, value in enumerate(data):
-                    for block_k, block_v in zip(*read_block(value)):
+                    for block_k, block_v in zip(
+                        *read_block(value), strict=True
+                    ):
                         keys.append(
                             wrap_quotes(
                                 f"{key}{SEP}{block_k}", TYPE_CHAR[dtype]
@@ -120,7 +124,7 @@ class Segment:
 
     def is_container(self) -> bool:
         "Return if is container"
-        return isinstance(self.item, (list, dict))
+        return isinstance(self.item, list | dict)
 
     def unwrap(self) -> Any:
         "Unwrap contained item"
@@ -220,7 +224,7 @@ def list_to_dict(keys: list[str], values: list[str]) -> Any:
                 )
 
     data = Segment()
-    for key, value in zip(keys, values):
+    for key, value in zip(keys, values, strict=True):
         unwrap_key(data, key, value)
     return data.unwrap()
 
@@ -246,7 +250,7 @@ def run() -> None:
     print(f"{test_v = }\n")
     keys, values = dict_to_list(test_v)
     ##    print((keys, values))
-    for key, value in zip(keys, values):
+    for key, value in zip(keys, values, strict=True):
         print(f"{key} = {value}")
     result = list_to_dict(keys, values)
     print(f"\n{result = }\n")

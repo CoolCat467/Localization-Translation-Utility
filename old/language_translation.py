@@ -241,7 +241,7 @@ def automatic_translation(data, from_lang="auto"):
     values = translate.translate_sentances(
         [data[key] for key in keys], language, from_lang
     )
-    trans = dict(zip(keys, values))
+    trans = dict(zip(keys, values, strict=True))
 
     print(f"\nDone translating to {lang_globs.LANGUAGES[language].title()}.")
     return trans
@@ -287,10 +287,11 @@ def automated_translation(
             "Requires translate and lang_globs modules. Can be found in github repository."
         )
     if doPrint:
-        # lintcheck: unnecessary-lambda (W0108): Lambda may not be necessary
-        pront = lambda x: print(x)
+        pront = print
     else:
-        pront = lambda x: None
+
+        def pront(*args: object) -> None:
+            return
 
     to_language_codes = list(to_language_codes)
 

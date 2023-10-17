@@ -48,7 +48,7 @@ def translate_sentence(sentence: str) -> str:
     new_sentence: list[str] = []
     for token_type, text in LEXER.lex_input():
         ##        print(f'{token_type}: {text}')
-        if token_type != "text":
+        if token_type != "text":  # noqa: S105
             if not new_sentence:
                 new_sentence.append("")
             new_sentence[-1] += text

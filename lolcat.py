@@ -5,13 +5,15 @@
 
 # Programmed by CoolCat467
 
+from __future__ import annotations
+
 __title__ = "Lolcat Scraper"
 __author__ = "CoolCat467"
 __version__ = "0.0.0"
 
 from collections.abc import Sequence
 from html.parser import HTMLParser
-from typing import Any, Optional
+from typing import Any
 
 import mechanicalsoup
 import trio
@@ -42,7 +44,7 @@ class ResponseParser(HTMLParser):
         self.search_tag_type = tag_type
         self.search_id = search_id
         self.found = False
-        self.value: Optional[str] = None
+        self.value: str | None = None
 
     def handle_starttag(self, tag: str, attrs: list) -> None:
         "Set found to True if tag type and id matches search"
@@ -118,7 +120,7 @@ def translate_file(english: dict, block_threshold: int = 2048) -> dict:
 
     results = translate_block(sentences, block_threshold)
 
-    for orig, new in zip(enumerate(sentences), results):
+    for orig, new in zip(enumerate(sentences), results, strict=True):
         idx, old = orig
         if new is None or not isinstance(old, str):
             results[idx] = old

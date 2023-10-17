@@ -20,7 +20,7 @@ import trio
 import agents
 
 TIMEOUT: Final[int] = 4
-AGENT = random.randint(0, 100000)
+AGENT = random.randint(0, 100000)  # noqa: S311
 
 
 async def gather(*tasks: partial[Coroutine[Any, Any, Any]]) -> list[Any]:
@@ -100,7 +100,9 @@ def translate_sync(
 
     # Get URL from function, which uses urllib to generate proper query
     url = get_translation_url(sentence, to_lang, source_lang)
-    with urllib.request.urlopen(url, timeout=0.5) as file:
+    if not url.startswith("http"):
+        raise ValueError("URL not http(s), is this intended?")
+    with urllib.request.urlopen(url, timeout=0.5) as file:  # noqa: S310
         request_result = json.loads(file.read())
     return process_response(request_result)
 

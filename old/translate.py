@@ -59,7 +59,7 @@ def translate_sync(
     # Make a get request to translate url with magic headers
     # that make it work right because google is smart and looks at that.
     # Also, make request result be json so we can look at it easily
-    request_result = requests.get(url, headers=MAGIC_HEADER).json()
+    request_result = requests.get(url, headers=MAGIC_HEADER, timeout=3).json()
     return process_response(request_result)
 
 
