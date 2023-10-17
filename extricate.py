@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 # Extricate - Take apart and put back together dictionaries
 
 "Take apart dictionaries"
@@ -10,7 +9,8 @@ __title__ = "Extricate"
 __author__ = "CoolCat467"
 __version__ = "0.0.2"
 
-from typing import Any, Callable, Collection, Final
+from collections.abc import Callable, Collection
+from typing import Any, Final
 
 
 def wrap_quotes(text: str, quotes: str = '"') -> str:
@@ -74,7 +74,9 @@ def dict_to_list(data: Any) -> tuple[list[str], list[str]]:
                     key = wrap_quotes(key, TYPE_CHAR[type(key).__name__])
                     for block_k, block_v in zip(*read_block(value)):
                         keys.append(
-                            wrap_quotes(f"{key}{SEP}{block_k}", TYPE_CHAR[dtype])
+                            wrap_quotes(
+                                f"{key}{SEP}{block_k}", TYPE_CHAR[dtype]
+                            )
                         )
                         values.append(block_v)
             case "list" as dtype:
@@ -87,14 +89,18 @@ def dict_to_list(data: Any) -> tuple[list[str], list[str]]:
                 for key, value in enumerate(data):
                     for block_k, block_v in zip(*read_block(value)):
                         keys.append(
-                            wrap_quotes(f"{key}{SEP}{block_k}", TYPE_CHAR[dtype])
+                            wrap_quotes(
+                                f"{key}{SEP}{block_k}", TYPE_CHAR[dtype]
+                            )
                         )
                         values.append(block_v)
             case "str" | "int" | "bool" | "float" | "NoneType" as dtype:
                 keys.append(wrap_quotes("", TYPE_CHAR[dtype]))
                 values.append(str(data))
             case _ as dtype:
-                raise TypeError(f'Expected type {list_or(TYPE_CHAR)}, got "{dtype}"')
+                raise TypeError(
+                    f'Expected type {list_or(TYPE_CHAR)}, got "{dtype}"'
+                )
         return keys, values
 
     return read_block(data)
@@ -162,7 +168,7 @@ def list_to_dict(keys: list[str], values: list[str]) -> Any:
         if head == "":
             segment.item = value
             return
-        if not head in CHAR_TYPE:
+        if head not in CHAR_TYPE:
             raise ValueError(f'Key type character "{head}" unrecognized')
         match CHAR_TYPE[head]:
             case "dict":
@@ -172,7 +178,7 @@ def list_to_dict(keys: list[str], values: list[str]) -> Any:
 
                 if raw_key:
                     dkey: int | str
-                    if not raw_key[0] in CHAR_TYPE:
+                    if raw_key[0] not in CHAR_TYPE:
                         raise ValueError(
                             f'Key type character "{raw_key[0]}" unrecognized'
                         )
@@ -182,9 +188,11 @@ def list_to_dict(keys: list[str], values: list[str]) -> Any:
                         case "int":
                             dkey = int(unwrap_quotes(raw_key))
                         case _ as dtype:
-                            raise TypeError(f'Expected str or int, got "{dtype}"')
+                            raise TypeError(
+                                f'Expected str or int, got "{dtype}"'
+                            )
 
-                    if not dkey in segment.item:
+                    if dkey not in segment.item:
                         segment.item[dkey] = Segment()
                     unwrap_key(segment.item[dkey], index, value)
             case "list":
@@ -207,7 +215,9 @@ def list_to_dict(keys: list[str], values: list[str]) -> Any:
             case "NoneType":
                 handle_map(segment, key, value, lambda x: None)
             case _ as dtype:
-                raise TypeError(f'Expected type {list_or(TYPE_CHAR)}, got "{dtype}"')
+                raise TypeError(
+                    f'Expected type {list_or(TYPE_CHAR)}, got "{dtype}"'
+                )
 
     data = Segment()
     for key, value in zip(keys, values):

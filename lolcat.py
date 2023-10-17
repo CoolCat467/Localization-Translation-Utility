@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 # Lolcat Translator - Scrape lolcat translation website
 
 "Lolcat Translator"
@@ -10,8 +9,9 @@ __title__ = "Lolcat Scraper"
 __author__ = "CoolCat467"
 __version__ = "0.0.0"
 
+from collections.abc import Sequence
 from html.parser import HTMLParser
-from typing import Any, Optional, Sequence
+from typing import Any, Optional
 
 import mechanicalsoup
 import trio

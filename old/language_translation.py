@@ -5,7 +5,7 @@
 "Language translation assistant tool"
 
 # Semi-compadable with Google Translate using copy-paste nonsense.
-# When "translate" module present, completely compatable.
+# When "translate" module present, completely compatible.
 
 # For Lolcat, https://funtranslations.com/lolcat is known to work, "good" translator.
 
@@ -35,7 +35,7 @@ __ver_patch__ = 0
 
 def read_file(filename):
     "Open filename and return data."
-    with open(filename, mode="r", encoding="utf-8") as readfile:
+    with open(filename, encoding="utf-8") as readfile:
         data = readfile.read()
         readfile.close()
     return data
@@ -51,14 +51,16 @@ def write_file(filename, data):
 def fix_json(data):
     "Read <data> and fix variable names it's readable as json."
     fixed = []
-    # Lines is all the lines, seperated by splitlines,
-    # while making tiny chuncks seperate lines so vartitle fix happens,
+    # Lines is all the lines, separated by splitlines,
+    # while making tiny chunks separate lines so vartitle fix happens,
     # and also avoiding comment lines because that breaks everything.
     lines = [
-        line for line in data.replace(", ", ",\n").splitlines() if not "--" in line
+        line
+        for line in data.replace(", ", ",\n").splitlines()
+        if "--" not in line
     ]
     # Chunks is initialized with giant main chunk or IndexError happens from pop.
-    chuncks = [[0, "{}"]]
+    chunks = [[0, "{}"]]
     # lintcheck: consider-using-enumerate (C0200): Consider using enumerate instead of iterating with range and len
     for lidx in range(len(lines)):
         line = lines[lidx]
@@ -75,7 +77,7 @@ def fix_json(data):
                 # Remove the trailing comma and don't break things
                 fixed[lidx - 1] = lline[:-1]
             # Now, pop the chunk we were reading's start and type.
-            start, totype = chuncks.pop()
+            start, totype = chunks.pop()
             # If we need to modify it (change to list),
             if totype == "[]":
                 # The start of the chunk should have its curly bracket changed
@@ -97,15 +99,15 @@ def fix_json(data):
                 # Chunk type is list
                 cnktype = "[]"
             # If next line isn't another chunk but it's not a dictionary,
-            elif not "=" in lines[lidx + 1]:
+            elif "=" not in lines[lidx + 1]:
                 # it's also a list.
                 cnktype = "[]"
             # Add new chunk to chunks que
-            chuncks.append([lidx, cnktype])
+            chunks.append([lidx, cnktype])
         # Get variable title
         varsplt = search.split()
         # Don't select chunk starts
-        vartitle = varsplt[0 if not "{" in varsplt else 1]
+        vartitle = varsplt[0 if "{" not in varsplt else 1]
         # Replace variable title with itself in double quotes
         line = line.replace(vartitle, '"' + vartitle + '"', 1)
         # Replace equal sign with colon
@@ -145,7 +147,7 @@ def break_json(dictionary, indent="\t", modifyNames=True):
 def copy_paste_translation(data):
     # lintcheck: line-too-long (C0301): Line too long (161/100)
     "Convert dictionary into string with numbers and special markers, then take copy-paste output back and undo that so it's a dictionary again and return that."
-    # Make conversion dictionarys for between key and numbers and backwards
+    # Make conversion dictionaries for between key and numbers and backwards
     # Create number to key dict with infinite number gen zipped with keys
     keys = list(data.keys())
     # lintcheck: unnecessary-comprehension (R1721): Unnecessary use of a comprehension, use dict(enumerate(keys)) instead.
@@ -156,7 +158,7 @@ def copy_paste_translation(data):
     to_paste = ""
     # For all the keys in our data,
     for key in data:
-        # Get the number that corelates with that key
+        # Get the number that correlates with that key
         num = rev_key_dict[key]
         # Add '#<key number>*<value>' to to_paste data
         # lintcheck: consider-using-f-string (C0209): Formatting a regular string which could be a f-string
@@ -170,9 +172,9 @@ def copy_paste_translation(data):
     copied = input("Enter translated result: ")
     # If it's google translate, we need to fix data
     # lintcheck: line-too-long (C0301): Line too long (109/100)
-    is_bad = not input(
+    is_bad = input(
         "Is translator nice? (output is not split by spaces)(y/N) : "
-    ).lower() in ("y", "yes")
+    ).lower() not in ("y", "yes")
     # If used bad (like google translate and it added spaces), fix it
     if is_bad:
         # Fix weirdness google translate adds to our fine data
@@ -192,7 +194,7 @@ def copy_paste_translation(data):
     lines = copied.replace("_n_", "\n").split("#")[1:]
     # For each line in output,
     for line in lines:
-        # Seperate key number from data by splitting by '*' characters
+        # Separate key number from data by splitting by '*' characters
         split = line.split("*")
         # If split data is empty, skip this line.
         if split == [""]:
@@ -204,7 +206,7 @@ def copy_paste_translation(data):
         if len(split) != 2:
             print("An error is about to occor very likely.")
             print(f'Line data: "{line}"')
-            print(f"Seperated Data: {split}")
+            print(f"Separated Data: {split}")
         # Get number and value from split data
         num, value = split
         # Add data to translated dictionary and convert key number back to real key.
@@ -214,25 +216,27 @@ def copy_paste_translation(data):
 
 def automatic_translation(data, from_lang="auto"):
     # lintcheck: line-too-long (C0301): Line too long (111/100)
-    "Use the power of awesome google translate module cool guy made and translate stuff automatially for free!"
-    language = input('Language code to translate to: (ex. "en", "zh-cn", "ru") : ')
+    "Use the power of awesome google translate module cool guy made and translate stuff automatically for free!"
+    language = input(
+        'Language code to translate to: (ex. "en", "zh-cn", "ru") : '
+    )
 
-    if not language in lang_globs.LANGUAGES:
+    if language not in lang_globs.LANGUAGES:
         if language in lang_globs.LANGCODES:
             old = language
             language = lang_globs.LANGCODES[language]
             # lintcheck: line-too-long (C0301): Line too long (122/100)
             print(
-                f'\nLanguage code "{old}" was not found, but it appears to corrospond with language code "{language}"!'
+                f'\nLanguage code "{old}" was not found, but it appears to correspond with language code "{language}"!'
             )
         else:
             # lintcheck: line-too-long (C0301): Line too long (123/100)
             print(
-                f'\nLanguage code "{language}" not found in known language codes. Unexpected results may occour shorly.'
+                f'\nLanguage code "{language}" not found in known language codes. Unexpected results may occur shortly.'
             )
             input("Press Enter to Continue. ")
 
-    print("Translating sentances asyncronously...")
+    print("Translating sentences asynchronously...")
     keys = tuple(data.keys())
     values = translate.translate_sentances(
         [data[key] for key in keys], language, from_lang
@@ -263,12 +267,12 @@ def automated_translation(
     If saveFile is True, save the files in the folder "Translated" in the
     current directory. Will create folder if it does not exist.
 
-    saveFilename should be a formatable string with an extention, ex "{}.txt" or
-    "{}.json" or "{}.lang", where {} gets subsituted by the language name.
+    saveFilename should be a formatable string with an extension, ex "{}.txt" or
+    "{}.json" or "{}.lang", where {} gets substituted by the language name.
     Again, all of these files will appear in the program's current running
     directory in a directory labled "Translated".
 
-    If fastest is True, run all translations asyncronously,
+    If fastest is True, run all translations asynchronously,
     which will likely cause a aiohttp error for too many open files
     because of the way things get translated. It can work for
     smaller jobs though, so that's why it exists.
@@ -302,21 +306,27 @@ def automated_translation(
         indent = "\t"
     print(f'\nAssummed file indentation: "{indent}"')
     if input("Change to a different value? (y/N) : ").lower() in ("y", "yes"):
-        indent = input("New indent: ").replace("\\t", "\t").replace("\\n", "\n")
+        indent = (
+            input("New indent: ").replace("\\t", "\t").replace("\\n", "\n")
+        )
 
     def eval_code(code):
         "Evaluate language code for validity."
-        if not code in lang_globs.LANGUAGES:
+        if code not in lang_globs.LANGUAGES:
             if code in lang_globs.LANGCODES:
                 old = code
                 code = lang_globs.LANGCODES[code]
                 # lintcheck: line-too-long (C0301): Line too long (122/100)
                 pront(
-                    f'\nLanguage code "{old}" was not found, but it appears to corrospond with language code "{code}"!'
+                    f'\nLanguage code "{old}" was not found, but it appears to correspond with language code "{code}"!'
                 )
             elif doPrint:
-                print(f'\nLanguage code "{code}" not found in known language codes.')
-                if input("Would you like to replace its value? (y/N) ").lower() in (
+                print(
+                    f'\nLanguage code "{code}" not found in known language codes.'
+                )
+                if input(
+                    "Would you like to replace its value? (y/N) "
+                ).lower() in (
                     "y",
                     "yes",
                 ):
@@ -353,7 +363,9 @@ def automated_translation(
         trans_sent = await translate.translate_async(
             loop, original_sentances, langcode, from_lang
         )
-        trans_dict = {original_keys[i]: trans_sent[i] for i in range(l_orig_keys)}
+        trans_dict = {
+            original_keys[i]: trans_sent[i] for i in range(l_orig_keys)
+        }
         pront(f"Translatation to {langcode} complete.")
         if save:
             await save_language(langcode, trans_dict)
@@ -363,7 +375,9 @@ def automated_translation(
         # lintcheck: line-too-long (C0301): Line too long (104/100)
         "Translate original file to all languages defined by to_lang_codes. Save files if save is True."
         if fastest:
-            coros = [translate_to_language(loop, lc, save) for lc in real_codes]
+            coros = [
+                translate_to_language(loop, lc, save) for lc in real_codes
+            ]
             results = await asyncio.gather(*coros)
         else:
             results = []
@@ -372,10 +386,12 @@ def automated_translation(
                 results.append(await translate_to_language(loop, lc, save))
         return dict(results)
 
-    # Get asyncronous event loop
+    # Get asynchronous event loop
     event_loop = asyncio.new_event_loop()
     pront(f"Beginning translation to {len(real_codes)} languages...")
-    results = event_loop.run_until_complete(translate_all_languages(event_loop))
+    results = event_loop.run_until_complete(
+        translate_all_languages(event_loop)
+    )
     event_loop.close()
     pront(f"\nTranslation of {len(real_codes)} languages complete!")
     return results
@@ -410,7 +426,10 @@ def run():
         print("Error: Invalid filename.")
         return terminate()
 
-    mineos = input("Is input lang file for MineOS? (y/N) ").lower() in ("y", "yes")
+    mineos = input("Is input lang file for MineOS? (y/N) ").lower() in (
+        "y",
+        "yes",
+    )
 
     if mineos:
         file_data = fix_json(file_data)
@@ -426,9 +445,9 @@ def run():
 
     try:
         # lintcheck: line-too-long (C0301): Line too long (132/100)
-        if CAN_AUTO_TRANS and not input(
-            f"Would you like to auto-translate with google translate? (Y/n) : "
-        ).lower() in ("n", "no"):
+        if CAN_AUTO_TRANS and input(
+            "Would you like to auto-translate with google translate? (Y/n) : "
+        ).lower() not in ("n", "no"):
             trans = automatic_translation(data)
         else:
             trans = copy_paste_translation(data)
@@ -447,11 +466,13 @@ def run():
         indent = "\t"
     print(f'\nAssummed file indentation: "{indent}"')
     if input("Change to a different value? (y/N) : ").lower() in ("y", "yes"):
-        indent = input("New indent: ").replace("\\t", "\t").replace("\\n", "\n")
+        indent = (
+            input("New indent: ").replace("\\t", "\t").replace("\\n", "\n")
+        )
 
     # Get language name from user
-    lang = input("\nNew language filename (no extention): ")
-    # Save file is language string + the extention used in the loaded file.
+    lang = input("\nNew language filename (no extension): ")
+    # Save file is language string + the extension used in the loaded file.
     # lintcheck: invalid-name (C0103): Variable name "saveFilename" doesn't conform to snake_case naming style
     saveFilename = lang + file_ext
 

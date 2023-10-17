@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 # Lexer - Read text and convert to tokens
 
 "Lexer"
@@ -12,11 +11,12 @@ __version__ = "0.0.0"
 
 import re
 from collections import deque
-from typing import Iterable, Iterator
+from collections.abc import Iterable, Iterator
 
 
 class Token:
     "Lexer Token class"
+    __slots__ = ("type", "regex")
 
     def __init__(self, token_type: str | int, regex: re.Pattern | str) -> None:
         self.type = token_type

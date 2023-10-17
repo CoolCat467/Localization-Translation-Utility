@@ -1,0 +1,118 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "Localization-Translation-Utility"
+version = "0.0.0"
+authors = [
+  { name="CoolCat467" },
+]
+description = "Utility program for translating localization files"
+readme = {file = "README.md", content-type = "text/markdown"}
+license = {file = "LICENSE"}
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3 :: Only",
+    "Operating System :: OS Independent",
+    "Typing :: Typed",
+]
+keywords = ["localization", "translation", "utility"]
+dependencies = [
+    "trio",
+    "httpx[http2]",
+    "mechanicalsoup",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/CoolCat467/Localization-Translation-Utility"
+"Source" = "https://github.com/CoolCat467/Localization-Translation-Utility"
+"Bug Tracker" = "https://github.com/CoolCat467/Localization-Translation-Utility/issues"
+
+[tool.setuptools.package-data]
+Localization-Translation-Utility = ["py.typed", "pic/*.png", "*.ttf"]
+
+[tool.mypy]
+mypy_path = "src"
+check_untyped_defs = true
+disallow_any_generics = true
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
+no_implicit_optional = true
+no_implicit_reexport = true
+show_column_numbers = true
+show_error_codes = true
+show_traceback = true
+strict = true
+strict_equality = true
+warn_redundant_casts = true
+warn_return_any = true
+warn_unreachable = true
+warn_unused_configs = true
+warn_unused_ignores = true
+
+[tool.black]
+line-length = 79
+target-version = ['py311']
+
+[tool.ruff.isort]
+combine-as-imports = true
+
+[tool.pycln]
+all = true
+disable_all_dunder_policy = true
+
+[tool.ruff]
+line-length = 79
+fix = true
+
+include = ["*.py", "*.pyi", "**/pyproject.toml"]
+select = [
+    "A",  # flake8-builtins
+    "ASYNC",  # flake8-async
+    "B",  # flake8-bugbear
+    "E",  # Error
+    "F",  # pyflakes
+    "I",  # isort
+    "RUF",  # Ruff-specific rules
+    "S",  # flake8-bandit
+    "UP",  # pyupgrade
+    "W",  # Warning
+    "YTT",  # flake8-2020
+]
+extend-ignore = [
+    'E501',  # line-too-long
+    "S101",  # use of assert for tests and type narrowing
+]
+
+[tool.tox]
+legacy_tox_ini = """
+    [tox]
+    envlist = py311, mypy
+    isolated_build = false
+
+    [gh-actions]
+    python =
+        3.11: py311, mypy
+
+    [testenv]
+    setenv =
+        PYTHONPATH = {toxinidir}
+
+    [testenv:pytest]
+    deps =
+        pytest
+        pytest-cov
+        pytest-trio
+    commands = pytest --basetemp={envtmpdir}
+
+    [testenv:mypy]
+    deps =
+        mypy
+    commands = mypy src
+"""

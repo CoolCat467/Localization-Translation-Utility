@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 # Conversion tools
 
 "Basically Lua Table parsing to and writing from Python dictionary"
@@ -53,7 +52,9 @@ def split_squished(squished_text: str) -> str:
     return "".join(lines)[:-1]
 
 
-def lang_to_json(lang_data: str) -> tuple[dict[str, Any], dict[str, dict[int, str]]]:
+def lang_to_json(
+    lang_data: str,
+) -> tuple[dict[str, Any], dict[str, dict[int, str]]]:
     "Fix language data to be readable by json parser. Return data and comments."
     if not lang_data[-1]:
         lang_data = lang_data[:-1]
@@ -61,7 +62,7 @@ def lang_to_json(lang_data: str) -> tuple[dict[str, Any], dict[str, dict[int, st
 
     new_lines = []
     comments: dict[str, dict[int, str]] = {}
-    for lidx, line in enumerate(lines):
+    for _lidx, line in enumerate(lines):
         if "{" in line and "}" in line:
             n_indent = line.count("\t") * "\t"
             nline = line.replace("{", f"{{\n{n_indent}")
@@ -139,15 +140,15 @@ def lang_to_json(lang_data: str) -> tuple[dict[str, Any], dict[str, dict[int, st
                 # to store as python object though.
                 if close_stack[-1] and key == "0":  # If supposed to be list
                     com = False
-                    strng = False
+                    string = False
                     if value.endswith(","):
                         value = value[:-1]
                         com = True
                     if value.startswith('"') and value.endswith('"'):
                         value = value[1:-1]
-                        strng = True
+                        string = True
                     value += "$$$$"
-                    if strng:
+                    if string:
                         value = f'"{value}"'
                     if com:
                         value += ","
@@ -202,7 +203,9 @@ def lang_to_json(lang_data: str) -> tuple[dict[str, Any], dict[str, dict[int, st
         raise
 
 
-def dict_to_lang(data: dict[str, Any], comments: dict[str, dict[int, str]]) -> str:
+def dict_to_lang(
+    data: dict[str, Any], comments: dict[str, dict[int, str]]
+) -> str:
     "Convert data and comments to MineOS file data"
     json_data = json.dumps(
         data, ensure_ascii=False, indent="\t", separators=(",", " = ")
@@ -214,7 +217,11 @@ def dict_to_lang(data: dict[str, Any], comments: dict[str, dict[int, str]]) -> s
 
         indent = line.count("\t") * "\t"
 
-        if " = " in line and line.split(" = ")[1].strip() == "[" or line.strip() == "[":
+        if (
+            " = " in line
+            and line.split(" = ")[1].strip() == "["
+            or line.strip() == "["
+        ):
             line = line.replace("[", "{", 1)
         if line.strip() in {"],", "]"}:
             line = line.replace("]", "}", 1)
@@ -337,13 +344,17 @@ def update_comment_positions(
                 read_offset += 1
 
                 # Record new comment
-                new_comments[section][new_pos - nbs] = original_pos[section][offset]
+                new_comments[section][new_pos - nbs] = original_pos[section][
+                    offset
+                ]
     return new_comments
 
 
-def read_lang_file(filepath: str) -> tuple[dict[str, Any], dict[str, dict[int, str]]]:
+def read_lang_file(
+    filepath: str,
+) -> tuple[dict[str, Any], dict[str, dict[int, str]]]:
     "Read MineOS data file"
-    with open(filepath, "r", encoding="utf-8") as file_point:
+    with open(filepath, encoding="utf-8") as file_point:
         fdata = file_point.read()
     return lang_to_json(fdata)
 

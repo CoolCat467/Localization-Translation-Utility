@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 # TimeUtils
 
 "Utilities for Time"
@@ -14,8 +13,9 @@ __ver_minor__ = 0
 __ver_patch__ = 0
 
 import time
+from collections.abc import Awaitable, Callable
 from functools import wraps
-from typing import Any, Awaitable, Callable, TypeVar, cast
+from typing import Any, TypeVar, cast
 
 F = TypeVar("F", bound=Callable[..., Any])
 

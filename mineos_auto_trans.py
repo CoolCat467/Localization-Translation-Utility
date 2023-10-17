@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 # Auto Translate localization files for MineOS
 
 "Auto Translate localization files for MineOS"
@@ -15,7 +14,8 @@ __ver_patch__ = 0
 
 import copy
 import os
-from typing import Any, Awaitable, Callable
+from collections.abc import Awaitable, Callable
+from typing import Any
 
 import httpx
 import trio
@@ -37,7 +37,7 @@ import translate
 ##    return f'https://api.github.com/repos/{user}/{repo}/contents/{path}'
 ##
 ##async def download_coroutine(client: httpx.AsyncClient, url: str) -> bytes:
-##    "Return the sentance translated, asyncronously."
+##    "Return the sentence translated, asynchronously."
 ##    # Go to the url and get response
 ##    response = await client.get(url, follow_redirects=True)
 ##    if 'x-Ratelimit-Remaining' in response.headers:
@@ -56,9 +56,11 @@ async def translate_file(
     data: dict, client: httpx.AsyncClient, to_lang: str, src_lang: str = "auto"
 ) -> dict:
     "Translate an entire file."
-    keys, sentances = extricate.dict_to_list(data)
-    results = await translate.translate_async(client, sentances, to_lang, src_lang)
-    for old, new in zip(enumerate(sentances), results):
+    keys, sentences = extricate.dict_to_list(data)
+    results = await translate.translate_async(
+        client, sentences, to_lang, src_lang
+    )
+    for old, new in zip(enumerate(sentences), results):
         idx, orig = old
         if new is None or not isinstance(orig, str):
             results[idx] = orig
@@ -117,7 +119,9 @@ def ensure_folder_exists(new_filename: str) -> None:
 ##        return file.read()
 
 
-async def download_file(path: str, cache_dir: str, client: httpx.AsyncClient) -> str:
+async def download_file(
+    path: str, cache_dir: str, client: httpx.AsyncClient
+) -> str:
     "Download file at path from MineOS repository."
     real_path = os.path.join(cache_dir, *path.split("/"))
     if not os.path.exists(real_path):
@@ -131,7 +135,7 @@ async def download_file(path: str, cache_dir: str, client: httpx.AsyncClient) ->
         await trio.sleep(1)
         return response.decode("utf-8")
     print(f"Loaded {path} from cache")
-    with open(real_path, "r", encoding="utf-8") as file:
+    with open(real_path, encoding="utf-8") as file:
         return file.read()
 
 
@@ -161,7 +165,9 @@ def section_to_walk(section: list) -> tuple:
 
 
 async def translate_file_given_coro(
-    trans_coro: Callable[[dict[str, Any], str, str], Awaitable[dict[str, str]]],
+    trans_coro: Callable[
+        [dict[str, Any], str, str], Awaitable[dict[str, str]]
+    ],
     file: tuple[dict, dict],
     lang_data: list[tuple[str, str]],
     folder: str,
@@ -196,7 +202,9 @@ async def abstract_translate(
     base_lang: str,
     cache_folder: str,
     get_unhandled: Callable[[set[str], str], set[str]],
-    trans_coro: Callable[[dict[str, Any], str, str], Awaitable[dict[str, str]]],
+    trans_coro: Callable[
+        [dict[str, Any], str, str], Awaitable[dict[str, str]]
+    ],
 ) -> None:
     "Main translate"
 
@@ -224,7 +232,9 @@ async def abstract_translate(
 
     for section in search:
         lang_files = [
-            f for f in files[section] if isinstance(f, str) and f.endswith(".lang")
+            f
+            for f in files[section]
+            if isinstance(f, str) and f.endswith(".lang")
         ]
         if section == "localizations":
             lang_files += [f"Installer/{f}" for f in lang_files]
@@ -232,10 +242,14 @@ async def abstract_translate(
             continue
         print("#" * 0x20 + section + "#" * 0x20)
         for folder, exists in section_to_walk(lang_files):
-            handled_langs: set[str] = {(f.split(".")[0]).lower() for f in exists}
+            handled_langs: set[str] = {
+                (f.split(".")[0]).lower() for f in exists
+            }
             if not handled_langs:
                 continue
-            last_handled = folder + "/" + exists[-1].split(".")[0].title() + ".lang"
+            last_handled = (
+                folder + "/" + exists[-1].split(".")[0].title() + ".lang"
+            )
             handled_langs |= ignore_languages
 
             unhandled = get_unhandled(handled_langs, folder)
@@ -264,7 +278,7 @@ async def abstract_translate(
                 fname = name.replace(" ", "_")
                 fname = fname.replace("(", "").replace(")", "")
                 section_filename = f"{folder}/{fname}.lang"
-                if not section_filename in files[section]:
+                if section_filename not in files[section]:
                     if folder == "Installer/Localizations":
                         continue
                     files[section].insert(insert_start + idx, section_filename)
@@ -304,7 +318,7 @@ async def translate_main(client: httpx.AsyncClient) -> None:
 
     def get_unhandled(handled: set, folder: str) -> set[str]:
         ##        return [v for k, v in languages.LANGCODES.items() if not k in handled]
-        return {k for k in languages.LANGCODES if not k in handled}
+        return {k for k in languages.LANGCODES if k not in handled}
 
     ##        return ['greek']
 
@@ -312,10 +326,14 @@ async def translate_main(client: httpx.AsyncClient) -> None:
         code = languages.LANGCODES[to_lang]
         return await translate_file(english, client, code, "en")
 
-    await abstract_translate(client, base_lang, cache_folder, get_unhandled, trans_coro)
+    await abstract_translate(
+        client, base_lang, cache_folder, get_unhandled, trans_coro
+    )
 
 
-async def translate_new_value(client: httpx.AsyncClient, key: str, folder: str) -> None:
+async def translate_new_value(
+    client: httpx.AsyncClient, key: str, folder: str
+) -> None:
     "Translate with google translate"
 
     here_folder = os.path.split(__file__)[0]
@@ -324,7 +342,9 @@ async def translate_new_value(client: httpx.AsyncClient, key: str, folder: str) 
 
     def get_unhandled(handled: set, lang_folder: str) -> set[str]:
         if lang_folder == folder:
-            return handled.difference({"chinese (traditional)", "english", "lolcat"})
+            return handled.difference(
+                {"chinese (traditional)", "english", "lolcat"}
+            )
         return set()
 
     async def trans_coro(english: dict, to_lang: str, folder: str) -> dict:
@@ -339,11 +359,15 @@ async def translate_new_value(client: httpx.AsyncClient, key: str, folder: str) 
 
         code = languages.LANGCODES[to_lang]
 
-        values = await translate.translate_async(client, [english[key]], code, "en")
+        values = await translate.translate_async(
+            client, [english[key]], code, "en"
+        )
         data[key] = values[0]
         return data
 
-    await abstract_translate(client, base_lang, cache_folder, get_unhandled, trans_coro)
+    await abstract_translate(
+        client, base_lang, cache_folder, get_unhandled, trans_coro
+    )
 
 
 def fix_translation(original: str, value: str) -> str:
@@ -371,7 +395,9 @@ async def translate_broken_values(client: httpx.AsyncClient) -> None:
     def get_unhandled(handled: set[str], lang_folder: str) -> set[str]:
         if "Localizations" not in lang_folder:
             return set()
-        return handled.difference({"chinese (traditional)", "english", "lolcat"})
+        return handled.difference(
+            {"chinese (traditional)", "english", "lolcat"}
+        )
 
     async def trans_coro(english: dict, to_lang: str, folder: str) -> dict:
         fname = to_lang.replace(" ", "_")
@@ -412,7 +438,9 @@ async def translate_broken_values(client: httpx.AsyncClient) -> None:
             return data
         return {}
 
-    await abstract_translate(client, base_lang, cache_folder, get_unhandled, trans_coro)
+    await abstract_translate(
+        client, base_lang, cache_folder, get_unhandled, trans_coro
+    )
 
 
 async def translate_lolcat(client: httpx.AsyncClient) -> None:
@@ -429,7 +457,9 @@ async def translate_lolcat(client: httpx.AsyncClient) -> None:
     async def trans_coro(english: dict, to_lang: str, folder: str) -> dict:
         return lolcat.translate_file(english)
 
-    await abstract_translate(client, base_lang, cache_folder, get_unhandled, trans_coro)
+    await abstract_translate(
+        client, base_lang, cache_folder, get_unhandled, trans_coro
+    )
 
 
 async def async_run() -> None:
@@ -446,7 +476,9 @@ async def async_run() -> None:
 def run() -> None:
     "Main entry point"
     ##    import trio.testing
-    trio.run(async_run)  # , clock=trio.testing.MockClock(autojump_threshold=0))
+    trio.run(
+        async_run
+    )  # , clock=trio.testing.MockClock(autojump_threshold=0))
 
 
 if __name__ == "__main__":

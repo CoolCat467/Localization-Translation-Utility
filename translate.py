@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 "Tiny translator module"
 
-__title__ = "Tiny tranlator module"
+__title__ = "Tiny translator module"
 __author__ = "CoolCat467"
 
 
 import json
 import random
 import urllib.request
-from typing import Any, Final, Sequence
+from collections.abc import Coroutine, Sequence
+from functools import partial
+from typing import Any, Final
 from urllib.parse import urlencode
 
 import httpx
@@ -22,12 +23,15 @@ TIMEOUT: Final[int] = 4
 AGENT = random.randint(0, 100000)
 
 
-async def gather(*tasks: Sequence[Any]) -> list[Any]:
+async def gather(*tasks: partial[Coroutine[Any, Any, Any]]) -> list[Any]:
     "Gather for trio."
 
-    async def collect(index: int, task: list[Any], results: dict[int, Any]) -> None:
-        task_func, *task_args = task
-        results[index] = await task_func(*task_args)
+    async def collect(
+        index: int,
+        task: partial[Coroutine[Any, Any, Any]],
+        results: dict[int, Any],
+    ) -> None:
+        results[index] = await task()
 
     results: dict[int, Any] = {}
     async with trio.open_nursery() as nursery:
@@ -56,7 +60,9 @@ def get_translation_url(
         "tl": to_language,
         "q": sentence,
     }
-    return "https://translate.googleapis.com/translate_a/single?" + urlencode(query)
+    return "https://translate.googleapis.com/translate_a/single?" + urlencode(
+        query
+    )
 
 
 def process_response(result: list[str] | list[list[Any]]) -> str:
@@ -64,22 +70,30 @@ def process_response(result: list[str] | list[list[Any]]) -> str:
     part = result
     while isinstance(part, list):
         next_ = part[0]
+        if isinstance(next_, str):
+            return next_
         if isinstance(next_, list):
             part = next_
-        elif isinstance(next_, str):
-            return next_
-    return part  # type: ignore[unreachable]
+        else:
+            raise ValueError(
+                f"Unexpected type {type(part)!r}, expected list or str"
+            )
 
 
 def is_url(text: str) -> bool:
     "Return True if text is probably a URL."
-    return text.startswith("http") and "://" in text and "." in text and not " " in text
+    return (
+        text.startswith("http")
+        and "://" in text
+        and "." in text
+        and " " not in text
+    )
 
 
 def translate_sync(
     sentence: str | int, to_lang: str, source_lang: str = "auto"
 ) -> str | int:
-    "Synchronously preform translation of sentence from source_lang to to_lang"
+    "Synchronously perform translation of sentence from source_lang to to_lang"
     if isinstance(sentence, int) or is_url(sentence):
         # skip numbers and URLs
         return sentence
@@ -129,20 +143,20 @@ async def get_translated_coroutine(
         except httpx.ConnectTimeout:
             pass
         except json.decoder.JSONDecodeError:
-            print(f"{type(response) = }")
-            print(f"{response = }")
+            print(f"{type(response) = }\n{response = }")
             raise
 
 
 async def translate_async(
     client: httpx.AsyncClient,
-    sentences: list[str | int],
+    sentences: Sequence[str | int],
     to_lang: str,
     source_lang: str,
 ) -> list[str | int]:
     "Translate multiple sentences asynchronously."
     coros = [
-        (get_translated_coroutine, client, q, to_lang, source_lang) for q in sentences
+        partial(get_translated_coroutine, client, q, to_lang, source_lang)
+        for q in sentences
     ]
     return await gather(*coros)
 
@@ -150,7 +164,7 @@ async def translate_async(
 async def async_run() -> None:
     "Async entry point"
     async with httpx.AsyncClient(http2=True) as client:
-        input_ = ["cat is bob", "bob is a potatoe"]
+        input_ = ["cat is bob", "bob is a potato"]
         print(f"{input_ = }")
         result = await translate_async(client, input_, "fr", "en")
         print(f"{result = }")
@@ -159,7 +173,9 @@ async def async_run() -> None:
 def run() -> None:
     "Main entry point"
     # import trio.testing
-    trio.run(async_run)  # , clock=trio.testing.MockClock(autojump_threshold=0))
+    trio.run(
+        async_run
+    )  # , clock=trio.testing.MockClock(autojump_threshold=0))
 
 
 if __name__ == "__main__":

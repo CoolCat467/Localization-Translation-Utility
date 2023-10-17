@@ -1,3 +1,0 @@
-trio
-httpx[http2]
-mechanicalsoup

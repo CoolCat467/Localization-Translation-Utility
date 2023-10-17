@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 # CSV Translate - Translate the Nanosaur Strings CSV file
 
 "CSV Translate"
@@ -57,7 +56,9 @@ async def download_coroutine(client: httpx.AsyncClient, url: str) -> bytes:
     return await response.aread()
 
 
-async def download_file(path: str, cache_dir: str, client: httpx.AsyncClient) -> str:
+async def download_file(
+    path: str, cache_dir: str, client: httpx.AsyncClient
+) -> str:
     "Download file at path from Nanosaur2 repository."
     real_path = os.path.join(cache_dir, *path.split("/"))
     if not os.path.exists(real_path):
@@ -71,12 +72,12 @@ async def download_file(path: str, cache_dir: str, client: httpx.AsyncClient) ->
         await trio.sleep(1)
         return response.decode("utf-8")
     print(f"Loaded {path} from cache")
-    with open(real_path, "r", encoding="utf-8") as file:
+    with open(real_path, encoding="utf-8") as file:
         return file.read()
 
 
 async def translate_file(
-    sentances: list[str],
+    sentences: list[str],
     client: httpx.AsyncClient,
     to_lang: str,
     src_lang: str = "auto",
@@ -84,15 +85,17 @@ async def translate_file(
     "Translate an entire file."
     insert: dict[int, str] = {}
     modified: list[str] = []
-    for idx, value in enumerate(sentances):
+    for idx, value in enumerate(sentences):
         if value in {"{", ""}:
             insert[idx] = value
             continue
         modified.append(value)
-    results = await translate.translate_async(client, modified, to_lang, src_lang)
+    results = await translate.translate_async(
+        client, modified, to_lang, src_lang
+    )
     for idx, value in insert.items():
         results.insert(idx, value)
-    for old, new in zip(enumerate(sentances), results):
+    for old, new in zip(enumerate(sentences), results):
         idx, orig = old
         if orig.endswith(" ") and not new.endswith(" "):
             results[idx] = new + " "
@@ -135,7 +138,9 @@ def read_nanosaur_localization(csv_file: io.IOBase) -> dict[str, list[str]]:
     return languages
 
 
-def write_nanosaur_localization(filename: str, languages: dict[str, list[str]]) -> None:
+def write_nanosaur_localization(
+    filename: str, languages: dict[str, list[str]]
+) -> None:
     "Write nanosaur localization file"
     with open(filename, "w", encoding="utf-8") as csv_file:
         writer = csv.writer(csv_file, dialect="nanosaur")
@@ -171,7 +176,9 @@ async def async_run() -> None:
     "Run program"
     cache = os.path.join(os.path.split(__file__)[0], "cache")
     async with httpx.AsyncClient(http2=True) as client:
-        contents = await download_file("Data/System/strings.csv", cache, client)
+        contents = await download_file(
+            "Data/System/strings.csv", cache, client
+        )
         file = io.StringIO(contents)
         languages = read_nanosaur_localization(file)
         file.close()

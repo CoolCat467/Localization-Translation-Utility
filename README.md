@@ -1,7 +1,10 @@
 # Localization-Translation-Utility
 Script for simplifying the process of translating Language (.lang) files
 
-Supports MineOS lang files, which is the main purpose of this project's existance
+<!-- BADGIE TIME -->
+<!-- END BADGIE TIME -->
+
+Supports MineOS lang files, which is the main purpose of this project's existence
 
 Simply run `auto_trans.py` and everything else except fixing comment positions is done.
 

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 # Lolcat Translator - Scrape lolcat translation website
 
 "Lolcat Translator"
@@ -11,7 +10,7 @@ __author__ = "CoolCat467"
 __version__ = "0.0.0"
 
 import json
-from typing import Any, Final, Optional, Sequence
+from typing import Final
 
 import extricate
 import lexer
@@ -20,7 +19,7 @@ LEXER: Final = lexer.Lexer()
 LEXER.add_token(lexer.Token("text", "[a-z|A-Z]+"))
 
 # Tranzlashun.json from https://github.com/normansimonr/Dumb-Cogs/blob/master/lolz/data/tranzlashun.json
-with open("tranzlashun.json", "r", encoding="utf-8") as trans_file:
+with open("tranzlashun.json", encoding="utf-8") as trans_file:
     TRANS_DICT: Final = json.load(trans_file)
 
 
@@ -81,7 +80,7 @@ def add_unchanged() -> None:
     ##    results = [x.strip() for x in result.split(sep)]
     results = [x.strip() for x in results]
     rewrite = False
-    for orig, new in zip(values, results):
+    for orig, new in zip(values, results, strict=True):
         if orig != new:
             print(f'"{orig}" -> "{new}"')
             TRANS_DICT[orig.lower()] = new
@@ -107,7 +106,7 @@ def translate_file(english: dict) -> dict:
 
     results = translate_block(sentences)
 
-    for orig, new in zip(enumerate(sentences), results):
+    for orig, new in zip(enumerate(sentences), results, strict=True):
         idx, old = orig
         if new is None or not isinstance(old, str):
             results[idx] = old
