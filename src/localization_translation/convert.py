@@ -76,7 +76,7 @@ def lang_to_json(
 
     new_lines = []
     comments: dict[str, dict[int, str]] = {}
-    for _lidx, line in enumerate(lines):
+    for line in lines:
         if "{" in line and "}" in line:
             n_indent = line.count("\t") * "\t"
             nline = line.replace("{", f"{{\n{n_indent}")
@@ -209,12 +209,9 @@ def lang_to_json(
             if square:
                 line = line.replace("{", "[", 1)
         new_lines.append(line)
-    ##    print('\n'.join(new_lines))
-    try:
-        return json.loads("\n".join(new_lines)), comments
-    except json.decoder.JSONDecodeError:
-        print("\n".join(new_lines))
-        raise
+    json_text = "\n".join(new_lines)
+    # print(json_text)
+    return json.loads(json_text), comments
 
 
 def dict_to_lang(
