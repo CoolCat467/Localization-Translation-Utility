@@ -128,8 +128,8 @@ async def download_file(
         ensure_folder_exists(real_path)
         print(f"GET {path}")
         response = await download_coroutine(client, mineos_url(path))
-        ##        j_resp = json.loads(response)
-        ##        data = base64.b64decode(j_resp['content'])
+        # j_resp = json.loads(response)
+        # data = base64.b64decode(j_resp['content'])
         with open(real_path, "wb") as file:  # noqa: ASYNC101
             file.write(response)
         await trio.sleep(1)
@@ -182,14 +182,15 @@ async def translate_file_given_coro(
     async def translate_file_coro(to_lang: str, filename: str) -> None:
         "Translate file from English to to_lang, save as filename."
         nonlocal changed
+        # print(f"START {to_lang.title()}")
         new_lang = await trans_coro(english, to_lang, folder)
         if new_lang:
-            print(to_lang.title())
+            print(f"END {to_lang.title()}")
             ensure_folder_exists(filename)
             convert.write_lang_file(filename, new_lang, comments)
             changed += 1
         else:
-            print(f"{to_lang.title()} not changed")
+            print(f"END {to_lang.title()}: not changed")
 
     async with trio.open_nursery() as nursery:
         for to_lang, filename in lang_data:
@@ -266,9 +267,9 @@ async def abstract_translate(
             base_group = os.path.join(base_lang, real_folder)
             total = len(unhandled)
             print(f"\n{total} languages do not exist, translating them now!")
-            ##            print(f'{lang_files = }')
+            # print(f'{lang_files = }')
             insert_start = lang_files.index(last_handled)
-            ##            insert_start = files[section].index(last_handled)
+            # insert_start = files[section].index(last_handled)
 
             lang_data = []
 
@@ -317,10 +318,9 @@ async def translate_main(client: httpx.AsyncClient) -> None:
     cache_folder = os.path.join(here_folder, "cache")
 
     def get_unhandled(handled: set, folder: str) -> set[str]:
-        ##        return [v for k, v in languages.LANGCODES.items() if not k in handled]
+        # return [v for k, v in languages.LANGCODES.items() if not k in handled]
+        # return ['greek']
         return {k for k in languages.LANGCODES if k not in handled}
-
-    ##        return ['greek']
 
     async def trans_coro(english: dict, to_lang: str, folder: str) -> dict:
         code = languages.LANGCODES[to_lang]
@@ -429,8 +429,8 @@ async def translate_broken_values(client: httpx.AsyncClient) -> None:
         async with trio.open_nursery() as nursery:
             for key in data:
                 if data[key] == english[key] or key == data[key]:
-                    ##                    print(f'{data[key]!r} -> {translated[key]!r}')
-                    ##                    data[key] = translated[key]
+                    # print(f'{data[key]!r} -> {translated[key]!r}')
+                    # data[key] = translated[key]
                     nursery.start_soon(translate_single, key)
                     modified = True
 
@@ -465,20 +465,19 @@ async def translate_lolcat(client: httpx.AsyncClient) -> None:
 async def async_run() -> None:
     "Async entry point"
     async with httpx.AsyncClient(http2=True) as client:
-        ##        await translate_main(client)
+        # await translate_main(client)
         await translate_broken_values(client)
 
-
-##        await translate_new_value(client, 'screenPreciseMode', 'Applications/Settings.app/Localizations')
-##        await translate_lolcat(client)
+        # await translate_new_value(client, 'screenPreciseMode', 'Applications/Settings.app/Localizations')
+        # await translate_new_value(client, 'categoryWallpapers', 'Applications/App Market.app/Localizations')
+        # await translate_lolcat(client)
 
 
 def run() -> None:
     "Main entry point"
-    ##    import trio.testing
-    trio.run(
-        async_run
-    )  # , clock=trio.testing.MockClock(autojump_threshold=0))
+    # import trio.testing
+    trio.run(async_run, strict_exception_groups=True)
+    # , clock=trio.testing.MockClock(autojump_threshold=0))
 
 
 if __name__ == "__main__":
