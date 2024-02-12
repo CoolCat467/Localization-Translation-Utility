@@ -17,6 +17,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 from __future__ import annotations
 
 __title__ = "Lolcat Scraper"
@@ -28,9 +29,10 @@ __license__ = "GNU General Public License Version 3"
 from html.parser import HTMLParser
 from typing import TYPE_CHECKING, Any
 
-import extricate
 import mechanicalsoup
 import trio
+
+from localization_translation import extricate
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -84,7 +86,7 @@ class ResponseParser(HTMLParser):
 
 def translate_sentence(sentence: str) -> str:
     """Translate sentence."""
-    browser = mechanicalsoup.StatefulBrowser()
+    browser = mechanicalsoup.StatefulBrowser(soup_config={"features": "html.parser"})
     browser.open("https://funtranslations.com/lolcat")
     browser.select_form("form#textform")
     browser["text"] = sentence
@@ -124,9 +126,11 @@ def translate_block(sentences: list[str], threshold: int = 2048) -> list[str]:
             block += to_translate.pop() + sep
         if not block:
             break
-        block = block[: -len(sep)]
+        block = block.removesuffix(sep)
         response = translate_sentence(block)
-        result += response.split(sep)
+        result.extend(response.split(sep))
+    ##        result.append(translate_sentence(to_translate.pop()))
+    assert len(result) == len(sentences), f"{len(result)} != {len(sentences)}"
     return result
 
 

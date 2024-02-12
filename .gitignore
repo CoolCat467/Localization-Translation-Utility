@@ -1,6 +1,6 @@
 # Files created by program
-cache/
-Upload/
+mineos_cache/
+mineos_upload/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

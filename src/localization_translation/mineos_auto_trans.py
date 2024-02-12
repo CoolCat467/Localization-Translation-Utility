@@ -30,13 +30,10 @@ import copy
 import os
 from typing import TYPE_CHECKING, Any
 
-import convert
-import extricate
 import httpx
-import languages
-import lolcat
-import translate
 import trio
+
+from localization_translation import convert, extricate, languages, lolcat, translate
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
@@ -310,9 +307,9 @@ async def abstract_translate(
 
 async def translate_main(client: httpx.AsyncClient) -> None:
     """Translate with google translate."""
-    here_folder = os.path.split(__file__)[0]
-    base_lang = os.path.join(here_folder, "Upload")
-    cache_folder = os.path.join(here_folder, "cache")
+    here_folder = os.getcwd()
+    base_lang = os.path.join(here_folder, "mineos_upload")
+    cache_folder = os.path.join(here_folder, "mineos_cache")
 
     def get_unhandled(handled: set, folder: str) -> set[str]:
         # return [v for k, v in languages.LANGCODES.items() if not k in handled]
@@ -328,9 +325,9 @@ async def translate_main(client: httpx.AsyncClient) -> None:
 
 async def translate_new_value(client: httpx.AsyncClient, key: str, folder: str) -> None:
     """Translate with google translate."""
-    here_folder = os.path.split(__file__)[0]
-    base_lang = os.path.join(here_folder, "Upload")
-    cache_folder = os.path.join(here_folder, "cache")
+    here_folder = os.getcwd()
+    base_lang = os.path.join(here_folder, "mineos_upload")
+    cache_folder = os.path.join(here_folder, "mineos_cache")
 
     def get_unhandled(handled: set, lang_folder: str) -> set[str]:
         if lang_folder == folder:
@@ -372,9 +369,9 @@ def fix_translation(original: str, value: str) -> str:
 
 async def translate_broken_values(client: httpx.AsyncClient) -> None:
     """Translate with google translate."""
-    here_folder = os.path.split(__file__)[0]
-    base_lang = os.path.join(here_folder, "Upload")
-    cache_folder = os.path.join(here_folder, "cache")
+    here_folder = os.getcwd()
+    base_lang = os.path.join(here_folder, "mineos_upload")
+    cache_folder = os.path.join(here_folder, "mineos_cache")
 
     def get_unhandled(handled: set[str], lang_folder: str) -> set[str]:
         if "Localizations" not in lang_folder:
@@ -425,9 +422,9 @@ async def translate_lolcat(client: httpx.AsyncClient) -> None:
     """Translate with website."""
     # https://funtranslations.com/lolcat
 
-    here_folder = os.path.split(__file__)[0]
-    base_lang = os.path.join(here_folder, "Upload")
-    cache_folder = os.path.join(here_folder, "cache")
+    here_folder = os.getcwd()
+    base_lang = os.path.join(here_folder, "mineos_upload")
+    cache_folder = os.path.join(here_folder, "mineos_cache")
 
     def get_unhandled(handled: set[str], folder: str) -> set[str]:
         return {"lolcat"}  # if not 'lolcat' in handled else set()

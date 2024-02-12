@@ -45,6 +45,9 @@ version = {attr = "localization_translation.__init__.__version__"}
 [tool.setuptools.package-data]
 localization_translation = ["py.typed"]
 
+[project.scripts]
+mineos_translate = "localization_translation.cli:main"
+
 [tool.mypy]
 mypy_path = "src"
 check_untyped_defs = true
