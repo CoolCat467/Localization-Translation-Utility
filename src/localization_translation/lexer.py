@@ -38,11 +38,16 @@ class Token:
     __slots__ = ("type", "regex")
 
     def __init__(self, token_type: str | int, regex: re.Pattern | str) -> None:
+        """Initialize Token."""
         self.type = token_type
         if not isinstance(regex, re.Pattern):
             self.regex = re.compile(regex)
         else:
             self.regex = regex
+
+    def __repr__(self) -> str:
+        """Return representation of self."""
+        return f"Token({self.type!r}, {self.regex!r})"
 
     def match(self, text: str) -> tuple[None | str, str]:
         """Match text with regular expression and return match result and non-matching text."""
@@ -52,9 +57,6 @@ class Token:
         end = result.end()
         return text[:end], text[end:]
 
-    def __repr__(self) -> str:
-        return f"Token({self.type!r}, {self.regex!r})"
-
 
 class Lexer:
     """Text lexer."""
@@ -62,6 +64,7 @@ class Lexer:
     __slots__ = ("tokens", "input")
 
     def __init__(self) -> None:
+        """Initialize Lexer."""
         self.tokens: set[Token] = set()
         self.input: deque[str] = deque()
 

@@ -52,6 +52,7 @@ class ResponseParser(HTMLParser):
     """Find tag with id and set self.value to data."""
 
     def __init__(self, tag_type: str, search_id: str) -> None:
+        """Initialize Response Parser."""
         super().__init__()
 
         self.search_tag_type = tag_type

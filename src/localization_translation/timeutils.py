@@ -33,15 +33,15 @@ F = TypeVar("F", bound=Callable[..., Any])
 
 
 def timed(func: F) -> F:
-    """Wrapper to time how long func takes."""
+    """Wrap function and print how long it took to run."""
 
     @wraps(func)
     def time_func(*args: Any, **kwargs: Any) -> Any:
-        start = time.perf_counter()
+        start = time.perf_counter_ns()
         result = func(*args, **kwargs)
-        stop = time.perf_counter()
+        stop = time.perf_counter_ns()
         call_elapsed = stop - start
-        print(f"\n{func.__name__} took {call_elapsed:.4f} seconds.\n")
+        print(f"\n{func.__name__} took {call_elapsed:.4f} nanoseconds.\n")
         return result
 
     return cast(F, time_func)
@@ -51,7 +51,7 @@ C = TypeVar("C", bound=Callable[..., Awaitable[Any]])
 
 
 def async_timed(func: C) -> C:
-    """Wrapper to time how long func takes."""
+    """Wrap function and print how long it took to run."""
 
     @wraps(func)
     async def time_func(*args: Any, **kwargs: Any) -> Any:
@@ -113,7 +113,7 @@ def combine_end(data: Iterable[str], end: str = "and") -> str:
 
 
 def format_time(seconds: int, single_title_allowed: bool = False) -> str:
-    """Returns time using the output of split_time."""
+    """Return time using the output of split_time."""
     times = (
         "eons",
         "eras",

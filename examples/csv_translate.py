@@ -4,8 +4,8 @@
 
 from __future__ import annotations
 
-# Convert - Lua Table Conversion to and from Python Dictionaries
-# Copyright (C) 2022-2024  CoolCat467
+# CSV Translate - Translate the Nanosaur Strings CSV file.
+# Copyright (C) 2023-2024  CoolCat467
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,9 +30,9 @@ import io
 import os
 
 import httpx
-import translate
 import trio
-from languages import LANGUAGES
+from localization_translation import translate
+from localization_translation.languages import LANGUAGES
 
 
 def raw_github_address(user: str, repo: str, branch: str, path: str) -> str:

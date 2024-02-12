@@ -152,7 +152,9 @@ async def download_lang(path: str, cache_dir: str, client: httpx.AsyncClient) ->
 
 
 def split(path: str) -> tuple[str, str]:
-    """Split a path name.  Returns tuple "(head, tail)" where "tail" is
+    """Split a path name.
+
+    Returns tuple "(head, tail)" where "tail" is
     everything after the final slash.  Either part may be empty.
     """
     data = path.split("/")
@@ -209,7 +211,7 @@ async def abstract_translate(
     get_unhandled: Callable[[set[str], str], set[str]],
     trans_coro: Callable[[dict[str, Any], str, str], Awaitable[dict[str, str]]],
 ) -> None:
-    """Main translate."""
+    """Abstract translation handler."""
     ignore_languages = {
         "chinese (traditional)",
     }
@@ -437,7 +439,7 @@ async def async_run() -> None:
 
 
 def run() -> None:
-    """Main entry point."""
+    """Translate MineOS localization files."""
     # import trio.testing
     trio.run(async_run, strict_exception_groups=True)
     # , clock=trio.testing.MockClock(autojump_threshold=0))

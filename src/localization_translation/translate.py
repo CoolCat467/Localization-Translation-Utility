@@ -26,7 +26,7 @@ import json
 import random
 import urllib.request
 from functools import partial
-from typing import TYPE_CHECKING, Any, Final
+from typing import TYPE_CHECKING, Any, Final, TypeVar, assert_never
 from urllib.parse import urlencode
 
 import agents
@@ -34,23 +34,25 @@ import httpx
 import trio
 
 if TYPE_CHECKING:
-    from collections.abc import Coroutine, Sequence
+    from collections.abc import Awaitable, Sequence
 
 TIMEOUT: Final[int] = 4
 AGENT = random.randint(0, 100000)  # noqa: S311
 
+T = TypeVar("T")
 
-async def gather(*tasks: partial[Coroutine[Any, Any, Any]]) -> list[Any]:
+
+async def gather(*tasks: partial[Awaitable[T]]) -> list[T]:
     """Gather for trio."""
 
     async def collect(
         index: int,
-        task: partial[Coroutine[Any, Any, Any]],
-        results: dict[int, Any],
+        task: partial[Awaitable[T]],
+        results: dict[int, T],
     ) -> None:
         results[index] = await task()
 
-    results: dict[int, Any] = {}
+    results: dict[int, T] = {}
     async with trio.open_nursery() as nursery:
         for index, task in enumerate(tasks):
             nursery.start_soon(collect, index, task, results)
@@ -89,7 +91,7 @@ def process_response(result: list[str] | list[list[Any]]) -> str:
             part = next_
         else:
             raise ValueError(f"Unexpected type {type(part)!r}, expected list or str")
-    return None
+    assert_never()
 
 
 def is_url(text: str) -> bool:
@@ -98,7 +100,7 @@ def is_url(text: str) -> bool:
 
 
 def translate_sync(sentence: str | int, to_lang: str, source_lang: str = "auto") -> str | int:
-    """Synchronously perform translation of sentence from source_lang to to_lang."""
+    """Return sentence translated from source_lang to to_lang."""
     if isinstance(sentence, int) or is_url(sentence):
         # skip numbers and URLs
         return sentence
@@ -161,26 +163,11 @@ async def translate_async(
     source_lang: str,
 ) -> list[str | int]:
     """Translate multiple sentences asynchronously."""
-    coros = [partial(get_translated_coroutine, client, q, to_lang, source_lang) for q in sentences]
+    coros: list[partial[Awaitable[str | int]]] = [
+        partial(get_translated_coroutine, client, q, to_lang, source_lang) for q in sentences
+    ]
     return await gather(*coros)
-
-
-async def async_run() -> None:
-    """Async entry point."""
-    async with httpx.AsyncClient(http2=True) as client:
-        input_ = ["cat is bob", "bob is a potato"]
-        print(f"{input_ = }")
-        result = await translate_async(client, input_, "fr", "en")
-        print(f"{result = }")
-
-
-def run() -> None:
-    """Main entry point."""
-    # import trio.testing
-    trio.run(async_run)
-    # , clock=trio.testing.MockClock(autojump_threshold=0))
 
 
 if __name__ == "__main__":
     print(f"{__title__} \nProgrammed by {__author__}.")
-    run()
