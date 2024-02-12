@@ -1,11 +1,11 @@
-"""TITLE - DESCRIPTION."""
+"""Localization Translation Utility."""
 
 # Programmed by CoolCat467
 
 from __future__ import annotations
 
-# TITLE - DESCRIPTION
-# Copyright (C) 2023  CoolCat467
+# Localization Translation Utility
+# Copyright (C) 2024  CoolCat467
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,16 +20,11 @@ from __future__ import annotations
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-__title__ = "TITLE"
+__title__ = "Localization Translation Utility"
 __author__ = "CoolCat467"
 __version__ = "0.0.0"
 __license__ = "GNU General Public License Version 3"
 
 
-def run() -> None:
-    """Run program."""
-
-
 if __name__ == "__main__":
     print(f"{__title__} v{__version__}\nProgrammed by {__author__}.\n")
-    run()

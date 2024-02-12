@@ -23,6 +23,8 @@ from __future__ import annotations
 __title__ = "Automatic Translation"
 __author__ = "CoolCat467"
 __version__ = "2.2.0"
+__license__ = "GNU General Public License Version 3"
+
 
 import copy
 import os
@@ -65,7 +67,12 @@ if TYPE_CHECKING:
 ##    return await response.aread()
 
 
-async def translate_file(data: dict, client: httpx.AsyncClient, to_lang: str, src_lang: str = "auto") -> dict:
+async def translate_file(
+    data: dict[str, str | int],
+    client: httpx.AsyncClient,
+    to_lang: str,
+    src_lang: str = "auto",
+) -> dict[str, str | int]:
     """Translate an entire file."""
     keys, sentences = extricate.dict_to_list(data)
     results = await translate.translate_async(client, sentences, to_lang, src_lang)
@@ -75,7 +82,7 @@ async def translate_file(data: dict, client: httpx.AsyncClient, to_lang: str, sr
             results[idx] = orig
         elif orig.endswith(" ") and not new.endswith(" "):
             results[idx] = new + " "
-    return extricate.list_to_dict(keys, results)  # type: ignore
+    return extricate.list_to_dict(keys, results)  # type: ignore[no-any-return]
 
 
 def raw_github_address(user: str, repo: str, branch: str, path: str) -> str:
@@ -146,7 +153,11 @@ async def download_file(path: str, cache_dir: str, client: httpx.AsyncClient) ->
         return file.read()
 
 
-async def download_lang(path: str, cache_dir: str, client: httpx.AsyncClient) -> tuple[dict, dict]:
+async def download_lang(
+    path: str,
+    cache_dir: str,
+    client: httpx.AsyncClient,
+) -> tuple[dict[str, Any], dict[str, dict[int, str]]]:
     """Download file from MineOS repository and decode as lang file. Return dict and comments."""
     return convert.lang_to_json(await download_file(path, cache_dir, client))
 

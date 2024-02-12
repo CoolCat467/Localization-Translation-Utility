@@ -23,6 +23,8 @@ from __future__ import annotations
 __title__ = "Time Utils"
 __author__ = "CoolCat467"
 __version__ = "1.0.0"
+__license__ = "GNU General Public License Version 3"
+
 
 import time
 from collections.abc import Awaitable, Callable, Iterable

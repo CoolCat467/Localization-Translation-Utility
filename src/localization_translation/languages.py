@@ -24,6 +24,9 @@
 
 # Stolen from https://github.com/ssut/py-googletrans/blob/master/googletrans/constants.py
 
+__license__ = "MIT"
+
+
 LANGUAGES = {
     "af": "afrikaans",
     "sq": "albanian",

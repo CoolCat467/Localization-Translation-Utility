@@ -20,6 +20,7 @@ from __future__ import annotations
 
 __title__ = "Tiny translator module"
 __author__ = "CoolCat467"
+__license__ = "GNU General Public License Version 3"
 
 
 import json

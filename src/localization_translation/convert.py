@@ -23,6 +23,8 @@ from __future__ import annotations
 __title__ = "Convert"
 __author__ = "CoolCat467"
 __version__ = "1.4.2"
+__license__ = "GNU General Public License Version 3"
+
 
 import json
 from typing import Any
