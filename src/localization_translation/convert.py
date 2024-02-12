@@ -1,34 +1,46 @@
-#!/usr/bin/env python3
-# Conversion tools
-
-"Basically Lua Table parsing to and writing from Python dictionary"
+"""Convert - Lua Table Conversion to and from Python Dictionaries"""
 
 # Programmed by CoolCat467
+
+from __future__ import annotations
+
+# Convert - Lua Table Conversion to and from Python Dictionaries
+# Copyright (C) 2023  CoolCat467
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 __title__ = "Convert"
 __author__ = "CoolCat467"
 __version__ = "1.4.2"
-__ver_major__ = 1
-__ver_minor__ = 4
-__ver_patch__ = 2
 
 import json
 from typing import Any
 
 
 def squish(text: str) -> str:
-    "Remove all newlines and tabs from text"
+    """Remove all newlines and tabs from text"""
     return text.translate({10: "", 9: ""})
 
 
 def split_squished(squished_text: str) -> str:
-    "Split text with {} and , with no indent or newlines into separate lines"
+    """Split text with {} and , with no indent or newlines into separate lines"""
     lines = []
     indent = 0
     cline = ""
 
     def cartrage_return() -> None:
-        "Add current line with indent"
+        """Add current line with indent"""
         nonlocal cline
         lines.append("\t" * indent + f"{cline}\n")
         cline = ""
@@ -55,7 +67,7 @@ def split_squished(squished_text: str) -> str:
 def lang_to_json(
     lang_data: str,
 ) -> tuple[dict[str, Any], dict[str, dict[int, str]]]:
-    "Fix language data to be readable by json parser. Return data and comments."
+    """Fix language data to be readable by json parser. Return data and comments."""
     if not lang_data[-1]:
         lang_data = lang_data[:-1]
     lines = lang_data.splitlines()
@@ -204,11 +216,11 @@ def lang_to_json(
 
 
 def dict_to_lang(
-    data: dict[str, Any], comments: dict[str, dict[int, str]]
+    data: dict[str, Any], comments: dict[str, dict[int, str]],
 ) -> str:
-    "Convert data and comments to MineOS file data"
+    """Convert data and comments to MineOS file data"""
     json_data = json.dumps(
-        data, ensure_ascii=False, indent="\t", separators=(",", " = ")
+        data, ensure_ascii=False, indent="\t", separators=(",", " = "),
     )
     new_lines: list[str] = []
     section: list[tuple[str, int]] = [("null", 0)]
@@ -292,7 +304,7 @@ def update_comment_positions(
     new_data: dict[str, Any],
     old_data: dict[str, Any],
 ) -> dict[str, dict[int, str]]:
-    "Update comment positions"
+    """Update comment positions"""
     # Get json text of files
     old_json = json.dumps(old_data, indent="\t").splitlines()
     new_json = json.dumps(new_data, indent="\t").splitlines()
@@ -353,16 +365,16 @@ def update_comment_positions(
 def read_lang_file(
     filepath: str,
 ) -> tuple[dict[str, Any], dict[str, dict[int, str]]]:
-    "Read MineOS data file"
+    """Read MineOS data file"""
     with open(filepath, encoding="utf-8") as file_point:
         fdata = file_point.read()
     return lang_to_json(fdata)
 
 
 def write_lang_file(
-    filepath: str, data: dict[str, Any], comments: dict[str, dict[int, str]]
+    filepath: str, data: dict[str, Any], comments: dict[str, dict[int, str]],
 ) -> None:
-    "Write MineOS data file"
+    """Write MineOS data file"""
     with open(filepath, "w", encoding="utf-8") as file_point:
         file_point.write(dict_to_lang(data, comments))
 

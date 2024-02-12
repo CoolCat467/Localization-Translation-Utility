@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Extricate - Take apart and put back together dictionaries
 
-"Take apart dictionaries"
+"""Take apart dictionaries"""
 
 # Programmed by CoolCat467
 
@@ -14,17 +14,17 @@ from typing import Any, Final
 
 
 def wrap_quotes(text: str, quotes: str = '"') -> str:
-    "Return text wrapped in quotes"
+    """Return text wrapped in quotes"""
     return f"{quotes}{text}{quotes}"
 
 
 def unwrap_quotes(text: str, layers: int = 1) -> str:
-    "Unwrap given layers of quotes"
+    """Unwrap given layers of quotes"""
     return text[layers:-layers]
 
 
 def list_or(values: Collection[str]) -> str:
-    "Return comma separated listing of values joined with ` or `"
+    """Return comma separated listing of values joined with ` or `"""
     if len(values) <= 2:
         return " or ".join(values)
     copy = list(values)
@@ -47,10 +47,10 @@ SEP: Final = "*"
 
 
 def dict_to_list(data: Any) -> tuple[list[str], list[str]]:
-    "Convert dictionary to two lists, one of keys, one of values."
+    """Convert dictionary to two lists, one of keys, one of values."""
 
     def read_block(data: Any) -> tuple[list[str], list[str]]:
-        "Read block"
+        """Read block"""
         keys: list[str] = []
         values: list[str] = []
 
@@ -68,17 +68,17 @@ def dict_to_list(data: Any) -> tuple[list[str], list[str]]:
                     if intersect:
                         raise ValueError(
                             'Dict key contains CHAR_TYPE value(s) "'
-                            f"{''.join(intersect)}" + '"'
+                            f"{''.join(intersect)}" + '"',
                         )
 
                     key = wrap_quotes(key, TYPE_CHAR[type(key).__name__])
                     for block_k, block_v in zip(
-                        *read_block(value), strict=True
+                        *read_block(value), strict=True,
                     ):
                         keys.append(
                             wrap_quotes(
-                                f"{key}{SEP}{block_k}", TYPE_CHAR[dtype]
-                            )
+                                f"{key}{SEP}{block_k}", TYPE_CHAR[dtype],
+                            ),
                         )
                         values.append(block_v)
             case "list" as dtype:
@@ -90,12 +90,12 @@ def dict_to_list(data: Any) -> tuple[list[str], list[str]]:
                 # Will not run if no data to enumerate
                 for key, value in enumerate(data):
                     for block_k, block_v in zip(
-                        *read_block(value), strict=True
+                        *read_block(value), strict=True,
                     ):
                         keys.append(
                             wrap_quotes(
-                                f"{key}{SEP}{block_k}", TYPE_CHAR[dtype]
-                            )
+                                f"{key}{SEP}{block_k}", TYPE_CHAR[dtype],
+                            ),
                         )
                         values.append(block_v)
             case "str" | "int" | "bool" | "float" | "NoneType" as dtype:
@@ -103,7 +103,7 @@ def dict_to_list(data: Any) -> tuple[list[str], list[str]]:
                 values.append(str(data))
             case _ as dtype:
                 raise TypeError(
-                    f'Expected type {list_or(TYPE_CHAR)}, got "{dtype}"'
+                    f'Expected type {list_or(TYPE_CHAR)}, got "{dtype}"',
                 )
         return keys, values
 
@@ -111,7 +111,7 @@ def dict_to_list(data: Any) -> tuple[list[str], list[str]]:
 
 
 class Segment:
-    "Segment with item. Basically like a pointer"
+    """Segment with item. Basically like a pointer"""
     __slots__ = ("item",)
 
     def __init__(self, item: Any = None) -> None:
@@ -123,11 +123,11 @@ class Segment:
         return f"Segment({self.item!r})"
 
     def is_container(self) -> bool:
-        "Return if is container"
+        """Return if is container"""
         return isinstance(self.item, list | dict)
 
     def unwrap(self) -> Any:
-        "Unwrap contained item"
+        """Unwrap contained item"""
         if not self.is_container():
             return self.item
         match type(self.item).__name__:
@@ -154,12 +154,12 @@ class Segment:
 
 
 def list_to_dict(keys: list[str], values: list[str]) -> Any:
-    "Convert split lists of compiled keys and values back into dictionary"
+    """Convert split lists of compiled keys and values back into dictionary"""
 
     def handle_map(
-        segment: Segment, key: str, value: str, map_func: Callable[[Any], Any]
+        segment: Segment, key: str, value: str, map_func: Callable[[Any], Any],
     ) -> None:
-        "Unwrap key and either set segment item or continue to unwrap"
+        """Unwrap key and either set segment item or continue to unwrap"""
         index = unwrap_quotes(key)
         if index == "":
             segment.item = map_func(value)
@@ -167,7 +167,7 @@ def list_to_dict(keys: list[str], values: list[str]) -> Any:
         unwrap_key(segment, index, map_func(value))
 
     def unwrap_key(segment: Segment, key: str, value: Any) -> None:
-        "Take apart key and set segment item to value in the right place"
+        """Take apart key and set segment item to value in the right place"""
         head = key[0]
         if head == "":
             segment.item = value
@@ -184,7 +184,7 @@ def list_to_dict(keys: list[str], values: list[str]) -> Any:
                     dkey: int | str
                     if raw_key[0] not in CHAR_TYPE:
                         raise ValueError(
-                            f'Key type character "{raw_key[0]}" unrecognized'
+                            f'Key type character "{raw_key[0]}" unrecognized',
                         )
                     match CHAR_TYPE[raw_key[0]]:
                         case "str":
@@ -193,7 +193,7 @@ def list_to_dict(keys: list[str], values: list[str]) -> Any:
                             dkey = int(unwrap_quotes(raw_key))
                         case _ as dtype:
                             raise TypeError(
-                                f'Expected str or int, got "{dtype}"'
+                                f'Expected str or int, got "{dtype}"',
                             )
 
                     if dkey not in segment.item:
@@ -220,7 +220,7 @@ def list_to_dict(keys: list[str], values: list[str]) -> Any:
                 handle_map(segment, key, value, lambda x: None)
             case _ as dtype:
                 raise TypeError(
-                    f'Expected type {list_or(TYPE_CHAR)}, got "{dtype}"'
+                    f'Expected type {list_or(TYPE_CHAR)}, got "{dtype}"',
                 )
 
     data = Segment()
@@ -230,7 +230,7 @@ def list_to_dict(keys: list[str], values: list[str]) -> Any:
 
 
 def run() -> None:
-    "Run test of module"
+    """Run test of module"""
     test_v = {
         "cat": {
             3: "5",

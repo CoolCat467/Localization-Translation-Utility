@@ -1,42 +1,39 @@
-#!/usr/bin/env python3
-
-##MIT License
-##
-##Copyright (c) 2021 Animenosekai
-##
-##Permission is hereby granted, free of charge, to any person obtaining a copy
-##of this software and associated documentation files (the "Software"), to deal
-##in the Software without restriction, including without limitation the rights
-##to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-##copies of the Software, and to permit persons to whom the Software is
-##furnished to do so, subject to the following conditions:
-##
-##The above copyright notice and this permission notice shall be included in all
-##copies or substantial portions of the Software.
-##
-##THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-##IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-##FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-##AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-##LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-##OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-##SOFTWARE.
-
-# Source: https://github.com/Animenosekai/useragents/blob/main/pyuseragents/data/list.py
-
-"""
-User-Agents list
+"""User-Agents list
 
 Anime no Sekai 2021
 
 https://github.com/Animenosekai/useragents/blob/main/pyuseragents/data/list.py
 """
 
+from __future__ import annotations
+
+# MIT License
+#
+# Copyright (c) 2021 Animenosekai
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# Source: https://github.com/Animenosekai/useragents/blob/main/pyuseragents/data/list.py
 # pylint: disable=too-many-lines,line-too-long
-
 import random
+from typing import Final
 
-USER_AGENTS = [
+USER_AGENTS: Final = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36",
     "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.90 Safari/537.36",
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36",
@@ -7537,9 +7534,9 @@ USER_AGENTS = [
     "Mozilla/5.0 (iPhone; CPU iPhone OS 9_2 like Mac OS X) AppleWebKit/601.1.46 (KHTML, like Gecko) Version/9.0 Mobile/13C5060d Safari/601.1",
     "Mozilla/5.0 (iPod; U; CPU iPhone OS 4_0 like Mac OS X; en-us) AppleWebKit/532.9 (KHTML, like Gecko) Version/4.0.5 Mobile/8A293 Safari/6531.22.7",
     "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6; nl-nl) AppleWebKit/531.9 (KHTML, like Gecko) Version/4.0.3 Safari/531.9",
-]
+)
 
 
 def get_agent() -> str:
-    "Return random user agent"
+    """Return random user agent"""
     return random.choice(USER_AGENTS)  # noqa: S311

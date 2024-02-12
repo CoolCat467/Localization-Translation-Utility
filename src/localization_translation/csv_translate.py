@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # CSV Translate - Translate the Nanosaur Strings CSV file
 
-"CSV Translate"
+"""CSV Translate"""
 
 # Programmed by CoolCat467
 
@@ -18,24 +18,23 @@ import io
 import os
 
 import httpx
-import trio
-
 import translate
+import trio
 from languages import LANGUAGES
 
 
 def raw_github_address(user: str, repo: str, branch: str, path: str) -> str:
-    "Get raw GitHub user content URL of a specific file."
+    """Get raw GitHub user content URL of a specific file."""
     return f"https://raw.githubusercontent.com/{user}/{repo}/{branch}/{path}"
 
 
 def nanosaur_url(path: str) -> str:
-    "Return raw GitHub address to path from MineOS repository."
+    """Return raw GitHub address to path from MineOS repository."""
     return raw_github_address("jorio", "Nanosaur2", "master", path)
 
 
 def ensure_folder_exists(new_filename: str) -> None:
-    "Ensure folder chain for new filename exists."
+    """Ensure folder chain for new filename exists."""
     if os.path.exists(new_filename):
         return
     new_filename = os.path.abspath(new_filename)
@@ -47,7 +46,7 @@ def ensure_folder_exists(new_filename: str) -> None:
 
 
 async def download_coroutine(client: httpx.AsyncClient, url: str) -> bytes:
-    "Return the sentence translated, asynchronously."
+    """Return the sentence translated, asynchronously."""
     # Go to the URL and get response
     response = await client.get(url, follow_redirects=True)
     if not response.is_success:
@@ -56,10 +55,8 @@ async def download_coroutine(client: httpx.AsyncClient, url: str) -> bytes:
     return await response.aread()
 
 
-async def download_file(
-    path: str, cache_dir: str, client: httpx.AsyncClient
-) -> str:
-    "Download file at path from Nanosaur2 repository."
+async def download_file(path: str, cache_dir: str, client: httpx.AsyncClient) -> str:
+    """Download file at path from Nanosaur2 repository."""
     real_path = os.path.join(cache_dir, *path.split("/"))
     if not os.path.exists(real_path):
         ensure_folder_exists(real_path)
@@ -82,7 +79,7 @@ async def translate_file(
     to_lang: str,
     src_lang: str = "auto",
 ) -> list[str]:
-    "Translate an entire file."
+    """Translate an entire file."""
     insert: dict[int, str] = {}
     modified: list[str] = []
     for idx, value in enumerate(sentences):
@@ -90,9 +87,7 @@ async def translate_file(
             insert[idx] = value
             continue
         modified.append(value)
-    results = await translate.translate_async(
-        client, modified, to_lang, src_lang
-    )
+    results = await translate.translate_async(client, modified, to_lang, src_lang)
     for idx, value in insert.items():
         results.insert(idx, value)
     for old, new in zip(enumerate(sentences), results, strict=True):
@@ -105,7 +100,8 @@ async def translate_file(
 
 
 class Nanosaur(csv.Dialect):
-    "Nanosaur dialect"
+    """Nanosaur dialect"""
+
     delimiter = ","
     doublequote = False
     escapechar = None
@@ -119,7 +115,7 @@ csv.register_dialect("nanosaur", Nanosaur)
 
 
 def read_nanosaur_localization(csv_file: io.IOBase) -> dict[str, list[str]]:
-    "Read nanosaur localization file"
+    """Read nanosaur localization file"""
     names = csv_file.readline().strip().split(",")
     reader = csv.reader(csv_file, dialect="nanosaur")
     languages: dict[str, list[str]] = {name: [] for name in names}
@@ -138,10 +134,8 @@ def read_nanosaur_localization(csv_file: io.IOBase) -> dict[str, list[str]]:
     return languages
 
 
-def write_nanosaur_localization(
-    filename: str, languages: dict[str, list[str]]
-) -> None:
-    "Write nanosaur localization file"
+def write_nanosaur_localization(filename: str, languages: dict[str, list[str]]) -> None:
+    """Write nanosaur localization file"""
     with open(filename, "w", encoding="utf-8") as csv_file:
         writer = csv.writer(csv_file, dialect="nanosaur")
         names = list(languages)
@@ -162,10 +156,8 @@ def write_nanosaur_localization(
             writer.writerow(row)
 
 
-async def create_translation(
-    languages: dict[str, list[str]], code: str, client: httpx.AsyncClient
-) -> None:
-    "Add translation for language with given code to languages dictionary"
+async def create_translation(languages: dict[str, list[str]], code: str, client: httpx.AsyncClient) -> None:
+    """Add translation for language with given code to languages dictionary"""
     result = await translate_file(languages["English"], client, code, "en")
     title = LANGUAGES[code].title()
     languages[title] = result
@@ -173,12 +165,10 @@ async def create_translation(
 
 
 async def async_run() -> None:
-    "Run program"
+    """Run program"""
     cache = os.path.join(os.path.split(__file__)[0], "cache")
     async with httpx.AsyncClient(http2=True) as client:
-        contents = await download_file(
-            "Data/System/strings.csv", cache, client
-        )
+        contents = await download_file("Data/System/strings.csv", cache, client)
         file = io.StringIO(contents)
         languages = read_nanosaur_localization(file)
         file.close()
@@ -191,7 +181,7 @@ async def async_run() -> None:
 
 
 def run() -> None:
-    "Main entry point"
+    """Main entry point"""
     trio.run(async_run)
 
 

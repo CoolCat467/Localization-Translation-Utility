@@ -1,32 +1,42 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools >= 64"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "Localization-Translation-Utility"
-version = "0.0.0"
+name = "localization_translation"
+dynamic = ["version"]
 authors = [
-  { name="CoolCat467" },
+  { name="CoolCat467", email="CoolCat467@duck.com" },
 ]
 description = "Utility program for translating localization files"
 readme = {file = "README.md", content-type = "text/markdown"}
 license = {file = "LICENSE"}
-requires-python = ">=3.10"
+requires-python = ">=3.9"
 classifiers = [
     "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Internet",
+    "Topic :: Utilities",
     "Operating System :: OS Independent",
+    "Framework :: Trio",
     "Typing :: Typed",
 ]
 keywords = ["localization", "translation", "utility"]
 dependencies = [
-    "trio",
+    "trio~=0.24.0",
     "httpx[http2]",
     "mechanicalsoup",
 ]
+
+[tool.setuptools.dynamic]
+version = {attr = "localization_translation.__init__.__version__"}
 
 [project.urls]
 "Homepage" = "https://github.com/CoolCat467/Localization-Translation-Utility"
@@ -34,7 +44,7 @@ dependencies = [
 "Bug Tracker" = "https://github.com/CoolCat467/Localization-Translation-Utility/issues"
 
 [tool.setuptools.package-data]
-Localization-Translation-Utility = ["py.typed", "pic/*.png", "*.ttf"]
+Localization-Translation-Utility = ["py.typed"]
 
 [tool.mypy]
 mypy_path = "src"
@@ -56,49 +66,113 @@ warn_unreachable = true
 warn_unused_configs = true
 warn_unused_ignores = true
 
-[tool.black]
-line-length = 79
-target-version = ['py311']
-
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 combine-as-imports = true
 
 [tool.pycln]
 all = true
 disable_all_dunder_policy = true
 
+[tool.black]
+line-length = 120  # Will not raise errors if too big, see below.
+target-version = ['py39']
+
+[tool.codespell]
+ignore-words-list = 'astroid,crasher,asend'
+skip = "*/agents.py,*/languages.py"
+
 [tool.ruff]
-line-length = 79
+line-length = 120  # I don't care about line length a whole lot, just that it's not TOO big.
 fix = true
 
 include = ["*.py", "*.pyi", "**/pyproject.toml"]
+
+[tool.ruff.lint]
 select = [
-    "A",  # flake8-builtins
-    "ASYNC",  # flake8-async
-    "B",  # flake8-bugbear
-    "E",  # Error
-    "F",  # pyflakes
-    "I",  # isort
-    "RUF",  # Ruff-specific rules
-    "S",  # flake8-bandit
-    "UP",  # pyupgrade
-    "W",  # Warning
-    "YTT",  # flake8-2020
+    "A",     # flake8-builtins
+    "ASYNC", # flake8-async
+    "B",     # flake8-bugbear
+    "C4",    # flake8-comprehensions
+    "COM",   # flake8-commas
+    "D",     # pydocstyle
+    "E",     # Error
+    "EXE",   # flake8-executable
+    "F",     # pyflakes
+    "FA",    # flake8-future-annotations
+    "I",     # isort
+    "N",     # pep8-naming
+    "PIE",   # flake8-pie
+    "PT",    # flake8-pytest-style
+    "PYI",   # flake8-pyi
+    "Q",     # flake8-quotes
+    "RET",   # flake8-return
+    "RUF",   # Ruff-specific rules
+    "S",     # flake8-bandit
+    "SIM",   # flake8-simplify
+    "SLOT",  # flake8-slots
+    "TCH",   # flake8-type-checking
+    "TRIO",  # flake8-trio
+    "UP",    # pyupgrade
+    "W",     # Warning
+    "YTT",   # flake8-2020
 ]
 extend-ignore = [
-    'E501',  # line-too-long
+##    "E501",  # line-too-long
     "S101",  # use of assert for tests and type narrowing
+    "D203",  # blank line thing
+    "D204",  # blank line thing
+    "D211",  # no-blank-line-before-class
+    "D213",  # multi-line-summary-second-line
+]
+
+[tool.pytest.ini_options]
+addopts = "--cov-report term-missing --cov=localization_translation"
+testpaths = [
+    "tests",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["src"]
+omit = [
+    "__init__.py",
+]
+
+[tool.coverage.report]
+precision = 1
+skip_covered = true
+exclude_also = [
+    "pragma: no cover",
+    "abc.abstractmethod",
+    "if TYPE_CHECKING.*:",
+    "if _t.TYPE_CHECKING:",
+    "if t.TYPE_CHECKING:",
+    "@overload",
+    'class .*\bProtocol\b.*\):',
+    "raise NotImplementedError",
+]
+partial_branches = [
+    "pragma: no branch",
+    "if not TYPE_CHECKING:",
+    "if not _t.TYPE_CHECKING:",
+    "if not t.TYPE_CHECKING:",
+    "if .* or not TYPE_CHECKING:",
+    "if .* or not _t.TYPE_CHECKING:",
+    "if .* or not t.TYPE_CHECKING:",
 ]
 
 [tool.tox]
 legacy_tox_ini = """
     [tox]
-    envlist = py311, mypy
+    envlist = py39, py310, py311, py312, pytest, mypy
     isolated_build = false
 
     [gh-actions]
     python =
-        3.11: py311, mypy
+        3.9: py39, pytest
+        3.10: py310, pytest
+        3.11: py311, pytest
+        3.12: py312, pytest, mypy
 
     [testenv]
     setenv =

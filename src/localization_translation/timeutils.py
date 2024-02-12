@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # TimeUtils
 
-"Utilities for Time"
+"""Utilities for Time"""
 
 # Programmed by CoolCat467
 
@@ -21,7 +21,7 @@ F = TypeVar("F", bound=Callable[..., Any])
 
 
 def timed(func: F) -> F:
-    "Wrapper to time how long func takes"
+    """Wrapper to time how long func takes"""
 
     @wraps(func)
     def time_func(*args: Any, **kwargs: Any) -> Any:
@@ -39,7 +39,7 @@ C = TypeVar("C", bound=Callable[..., Awaitable[Any]])
 
 
 def async_timed(func: C) -> C:
-    "Wrapper to time how long func takes"
+    """Wrapper to time how long func takes"""
 
     @wraps(func)
     async def time_func(*args: Any, **kwargs: Any) -> Any:
@@ -54,11 +54,11 @@ def async_timed(func: C) -> C:
 
 
 def split_time(seconds: int) -> list[int]:
-    "Split time into decades, years, months, weeks, days, hours, minutes, and seconds."
+    """Split time into decades, years, months, weeks, days, hours, minutes, and seconds."""
     seconds = int(seconds)
 
     def mod_time(sec: int, num: int) -> tuple:
-        "Return number of times sec divides equally by number, then remainder."
+        """Return number of times sec divides equally by number, then remainder."""
         smod = sec % num
         return int((sec - smod) // num), smod
 
@@ -91,7 +91,7 @@ def split_time(seconds: int) -> list[int]:
 
 
 def combine_and(data: list[str]) -> str:
-    "Join values of text, and have 'and' with the last one properly."
+    """Join values of text, and have 'and' with the last one properly."""
     data = list(data)
     if len(data) >= 2:
         data[-1] = "and " + data[-1]
@@ -101,7 +101,7 @@ def combine_and(data: list[str]) -> str:
 
 
 def format_time(seconds: int, single_title_allowed: bool = False) -> str:
-    "Returns time using the output of split_time."
+    """Returns time using the output of split_time."""
     times = (
         "eons",
         "eras",
@@ -135,7 +135,7 @@ def format_time(seconds: int, single_title_allowed: bool = False) -> str:
 
 
 def run() -> None:
-    "Run as main"
+    """Run as main"""
 
 
 if __name__ == "__main__":

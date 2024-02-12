@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Lexer - Read text and convert to tokens
 
-"Lexer"
+"""Lexer"""
 
 # Programmed by CoolCat467
 
@@ -15,7 +15,8 @@ from collections.abc import Iterable, Iterator
 
 
 class Token:
-    "Lexer Token class"
+    """Lexer Token class"""
+
     __slots__ = ("type", "regex")
 
     def __init__(self, token_type: str | int, regex: re.Pattern | str) -> None:
@@ -26,7 +27,7 @@ class Token:
             self.regex = regex
 
     def match(self, text: str) -> tuple[None | str, str]:
-        "Match text with regular expression and return match result and non-matching text"
+        """Match text with regular expression and return match result and non-matching text"""
         result = self.regex.match(text)
         if result is None:
             return result, text
@@ -38,7 +39,8 @@ class Token:
 
 
 class Lexer:
-    "Text lexer"
+    """Text lexer"""
+
     __slots__ = ("tokens", "input")
 
     def __init__(self) -> None:
@@ -46,27 +48,27 @@ class Lexer:
         self.input: deque[str] = deque()
 
     def add_token(self, token: Token) -> None:
-        "Add token to lexer"
+        """Add token to lexer"""
         if not isinstance(token, Token):
             raise ValueError("New token is not instance of Token class!")
         self.tokens.add(token)
 
     def add_tokens(self, tokens: Iterable[Token]) -> None:
-        "Add multiple tokens to lexer"
+        """Add multiple tokens to lexer"""
         for token in tokens:
             self.add_token(token)
 
     def read_input(self, text: str) -> None:
-        "Add text to input"
+        """Add text to input"""
         self.input.extend(text)
 
     def input_gen(self) -> Iterator[str]:
-        "Yield characters from input"
+        """Yield characters from input"""
         while self.input:
             yield self.input.popleft()
 
     def word_gen(self) -> Iterator[str]:
-        "Yield words from input"
+        """Yield words from input"""
         word = ""
         for char in self.input_gen():
             if char == " ":
@@ -78,7 +80,7 @@ class Lexer:
             yield word
 
     def lex_input(self) -> Iterator[tuple[str | int | None, str]]:
-        "Yield token type and matched text. Unhandled type is None."
+        """Yield token type and matched text. Unhandled type is None."""
         for word in self.word_gen():
             for token in self.tokens:
                 match, extra = token.match(word)
@@ -95,7 +97,7 @@ class Lexer:
 
 
 def run() -> None:
-    "Run test of module"
+    """Run test of module"""
     test = Lexer()
 
     test.add_token(Token("text", re.compile("[a-z|A-Z]+")))

@@ -12,6 +12,11 @@ Script for simplifying the process of translating Language (.lang) files
 
 Supports MineOS lang files, which is the main purpose of this project's existence
 
+## Installation
+```console
+pip install git+https://github.com/CoolCat467/Localization-Translation-Utility.git
+```
+
 Simply run `auto_trans.py` and everything else except fixing comment positions is done.
 
 The program will download `Installer/Files.cfg` from MineOS repo, save downloaded files
@@ -41,18 +46,3 @@ doesn't get suspicious of us sending tens of thousands of requests without an AP
 
 `languages.py` from https://github.com/ssut/py-googletrans/blob/master/googletrans/constants.py
 is by ssut and has a giant dictionary of language names matched with ISO 639-1:2002 language codes
-
-
-
-Versions:
-1.0.0 - Initial release
-
-2.0.0 - Adding auto translation and general clean-up
-
-3.0.0 - Automate everything except fixing comment positions.
-
-3.1.0 - Fix comment positions.
-
-4.0.0 - Change to trio instead of asyncio and add ability to fix single untranslated value.
-
-4.1.0 - Add ability to fix untranslated values in all localization files

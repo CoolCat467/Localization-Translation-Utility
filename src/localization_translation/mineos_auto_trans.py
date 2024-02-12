@@ -8,6 +8,9 @@
 __title__ = "Auto_Trans"
 __author__ = "CoolCat467"
 __version__ = "2.2.0"
+__ver_major__ = 2
+__ver_minor__ = 2
+__ver_patch__ = 0
 
 import copy
 import os
