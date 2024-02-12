@@ -1,21 +1,32 @@
-#!/usr/bin/env python3
-# Auto Translate localization files for MineOS
-
-"""Auto Translate localization files for MineOS."""
+"""Automatic Translation - Auto Translate localization files for MineOS."""
 
 # Programmed by CoolCat467
 
-__title__ = "Auto_Trans"
+from __future__ import annotations
+
+# Automatic Translation - Auto Translate localization files for MineOS.
+# Copyright (C) 2022-2024  CoolCat467
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+__title__ = "Automatic Translation"
 __author__ = "CoolCat467"
 __version__ = "2.2.0"
-__ver_major__ = 2
-__ver_minor__ = 2
-__ver_patch__ = 0
 
 import copy
 import os
-from collections.abc import Awaitable, Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import convert
 import extricate
@@ -24,6 +35,9 @@ import languages
 import lolcat
 import translate
 import trio
+
+if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable
 
 ##import json
 ##import base64

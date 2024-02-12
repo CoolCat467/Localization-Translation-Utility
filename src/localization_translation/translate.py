@@ -1,7 +1,22 @@
-#!/usr/bin/env python3
+"""Translate - Tiny translator module."""
 
-"""Tiny translator module."""
 from __future__ import annotations
+
+# Translate - Tiny translator module.
+# Copyright (C) 2022-2024  CoolCat467
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 __title__ = "Tiny translator module"
 __author__ = "CoolCat467"
@@ -162,7 +177,8 @@ async def async_run() -> None:
 def run() -> None:
     """Main entry point."""
     # import trio.testing
-    trio.run(async_run)  # , clock=trio.testing.MockClock(autojump_threshold=0))
+    trio.run(async_run)
+    # , clock=trio.testing.MockClock(autojump_threshold=0))
 
 
 if __name__ == "__main__":

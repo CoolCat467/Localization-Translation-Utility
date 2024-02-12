@@ -1,16 +1,28 @@
-#!/usr/bin/env python3
-# CSV Translate - Translate the Nanosaur Strings CSV file
-
-"""CSV Translate."""
+"""CSV Translate - Translate the Nanosaur Strings CSV file."""
 
 # Programmed by CoolCat467
+
+from __future__ import annotations
+
+# Convert - Lua Table Conversion to and from Python Dictionaries
+# Copyright (C) 2022-2024  CoolCat467
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 __title__ = "CSV Translate"
 __author__ = "CoolCat467"
 __version__ = "0.0.0"
-__ver_major__ = 0
-__ver_minor__ = 0
-__ver_patch__ = 0
 
 
 import csv
@@ -87,7 +99,7 @@ async def translate_file(
             insert[idx] = value
             continue
         modified.append(value)
-    results = await translate.translate_async(client, modified, to_lang, src_lang)
+    results: list[str] = await translate.translate_async(client, modified, to_lang, src_lang)
     for idx, value in insert.items():
         results.insert(idx, value)
     for old, new in zip(enumerate(sentences), results, strict=True):
@@ -114,9 +126,11 @@ class Nanosaur(csv.Dialect):
 csv.register_dialect("nanosaur", Nanosaur)
 
 
-def read_nanosaur_localization(csv_file: io.IOBase) -> dict[str, list[str]]:
+def read_nanosaur_localization(csv_file: io.StringIO) -> dict[str, list[str]]:
     """Read nanosaur localization file."""
-    names = csv_file.readline().strip().split(",")
+    header = csv_file.readline().strip()
+    assert isinstance(header, str)
+    names = header.split(",")
     reader = csv.reader(csv_file, dialect="nanosaur")
     languages: dict[str, list[str]] = {name: [] for name in names}
     for _ in zip(range(len(names)), reader, strict=False):
@@ -181,7 +195,7 @@ async def async_run() -> None:
 
 
 def run() -> None:
-    """Main entry point."""
+    """Translate nanosaur strings."""
     trio.run(async_run)
 
 

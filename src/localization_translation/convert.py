@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 # Convert - Lua Table Conversion to and from Python Dictionaries
-# Copyright (C) 2023  CoolCat467
+# Copyright (C) 2022-2024  CoolCat467
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -216,11 +216,15 @@ def lang_to_json(
 
 
 def dict_to_lang(
-    data: dict[str, Any], comments: dict[str, dict[int, str]],
+    data: dict[str, Any],
+    comments: dict[str, dict[int, str]],
 ) -> str:
     """Convert data and comments to MineOS file data."""
     json_data = json.dumps(
-        data, ensure_ascii=False, indent="\t", separators=(",", " = "),
+        data,
+        ensure_ascii=False,
+        indent="\t",
+        separators=(",", " = "),
     )
     new_lines: list[str] = []
     section: list[tuple[str, int]] = [("null", 0)]
@@ -229,11 +233,7 @@ def dict_to_lang(
 
         indent = line.count("\t") * "\t"
 
-        if (
-            " = " in line
-            and line.split(" = ")[1].strip() == "["
-            or line.strip() == "["
-        ):
+        if " = " in line and line.split(" = ")[1].strip() == "[" or line.strip() == "[":
             line = line.replace("[", "{", 1)
         if line.strip() in {"],", "]"}:
             line = line.replace("]", "}", 1)
@@ -344,9 +344,7 @@ def update_comment_positions(
                 read_offset += 1
 
                 # Record new comment
-                new_comments[section][new_pos - nbs] = original_pos[section][
-                    offset
-                ]
+                new_comments[section][new_pos - nbs] = original_pos[section][offset]
     return new_comments
 
 
@@ -360,7 +358,9 @@ def read_lang_file(
 
 
 def write_lang_file(
-    filepath: str, data: dict[str, Any], comments: dict[str, dict[int, str]],
+    filepath: str,
+    data: dict[str, Any],
+    comments: dict[str, dict[int, str]],
 ) -> None:
     """Write MineOS data file."""
     with open(filepath, "w", encoding="utf-8") as file_point:

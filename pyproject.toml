@@ -11,7 +11,7 @@ authors = [
 description = "Utility program for translating localization files"
 readme = {file = "README.md", content-type = "text/markdown"}
 license = {file = "LICENSE"}
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -44,7 +44,7 @@ version = {attr = "localization_translation.__init__.__version__"}
 "Bug Tracker" = "https://github.com/CoolCat467/Localization-Translation-Utility/issues"
 
 [tool.setuptools.package-data]
-Localization-Translation-Utility = ["py.typed"]
+localization_translation = ["py.typed"]
 
 [tool.mypy]
 mypy_path = "src"
@@ -75,7 +75,7 @@ disable_all_dunder_policy = true
 
 [tool.black]
 line-length = 120  # Will not raise errors if too big, see below.
-target-version = ['py39']
+target-version = ['py310']
 
 [tool.codespell]
 ignore-words-list = 'astroid,crasher,asend'
@@ -123,6 +123,16 @@ extend-ignore = [
     "D204",  # blank line thing
     "D211",  # no-blank-line-before-class
     "D213",  # multi-line-summary-second-line
+]
+
+[tool.ruff.lint.per-file-ignores]
+"src/localization_translation/agents.py" = [
+    "E501",  # line-too-long
+]
+"tests/*" = [
+    "D100",  # undocumented-public-module
+    "D103",  # undocumented-public-function
+    "E501",  # line too long
 ]
 
 [tool.pytest.ini_options]

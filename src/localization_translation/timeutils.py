@@ -1,19 +1,31 @@
-#!/usr/bin/env python3
-# TimeUtils
-
-"""Utilities for Time."""
+"""Time Utils - Utilities for Time."""
 
 # Programmed by CoolCat467
+
+from __future__ import annotations
+
+# Time Utils - Utilities for Time.
+# Copyright (C) 2022-2024  CoolCat467
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 __title__ = "Time Utils"
 __author__ = "CoolCat467"
 __version__ = "1.0.0"
-__ver_major__ = 1
-__ver_minor__ = 0
-__ver_patch__ = 0
 
 import time
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Iterable
 from functools import wraps
 from typing import Any, TypeVar, cast
 
@@ -90,11 +102,11 @@ def split_time(seconds: int) -> list[int]:
     return ret
 
 
-def combine_and(data: list[str]) -> str:
-    """Join values of text, and have 'and' with the last one properly."""
+def combine_end(data: Iterable[str], end: str = "and") -> str:
+    """Join values of text with the last one properly."""
     data = list(data)
     if len(data) >= 2:
-        data[-1] = "and " + data[-1]
+        data[-1] = f"{end} {data[-1]}"
     if len(data) > 2:
         return ", ".join(data)
     return " ".join(data)
@@ -130,13 +142,8 @@ def format_time(seconds: int, single_title_allowed: bool = False) -> str:
     for index, value in zip_idx_values:
         title = single[index] if abs(value) < 2 else times[index]
         data.append(str(value) + " " + title)
-    return combine_and(data)
-
-
-def run() -> None:
-    """Run as main."""
+    return combine_end(data)
 
 
 if __name__ == "__main__":
     print(f"{__title__} v{__version__}\nProgrammed by {__author__}.")
-    run()

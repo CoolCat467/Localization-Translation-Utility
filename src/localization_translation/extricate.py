@@ -1,10 +1,24 @@
-#!/usr/bin/env python3
-# Extricate - Take apart and put back together dictionaries
-
-"""Take apart dictionaries."""
+"""Extricate - Take dictionaries apart and put them back together."""
 
 # Programmed by CoolCat467
+
 from __future__ import annotations
+
+# Extricate - Take apart and put back together dictionaries
+# Copyright (C) 2022-2024  CoolCat467
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 __title__ = "Extricate"
 __author__ = "CoolCat467"
@@ -13,7 +27,7 @@ __version__ = "0.0.2"
 from typing import TYPE_CHECKING, Any, Final
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Collection
+    from collections.abc import Callable, Iterable
 
 
 def wrap_quotes(text: str, quotes: str = '"') -> str:
@@ -26,13 +40,14 @@ def unwrap_quotes(text: str, layers: int = 1) -> str:
     return text[layers:-layers]
 
 
-def list_or(values: Collection[str]) -> str:
-    """Return comma separated listing of values joined with ` or `."""
-    if len(values) <= 2:
-        return " or ".join(values)
-    copy = list(values)
-    copy[-1] = f"or {copy[-1]}"
-    return ", ".join(copy)
+def combine_end(data: Iterable[str], end: str = "and") -> str:
+    """Join values of text with the last one properly."""
+    data = list(data)
+    if len(data) >= 2:
+        data[-1] = f"{end} {data[-1]}"
+    if len(data) > 2:
+        return ", ".join(data)
+    return " ".join(data)
 
 
 TYPE_CHAR: Final = {
@@ -70,17 +85,18 @@ def dict_to_list(data: Any) -> tuple[list[str], list[str]]:
                     intersect = set(str(key)) & (set(CHAR_TYPE) | {SEP})
                     if intersect:
                         raise ValueError(
-                            'Dict key contains CHAR_TYPE value(s) "'
-                            f"{''.join(intersect)}" + '"',
+                            'Dict key contains CHAR_TYPE value(s) "' f"{''.join(intersect)}" + '"',
                         )
 
                     key = wrap_quotes(key, TYPE_CHAR[type(key).__name__])
                     for block_k, block_v in zip(
-                        *read_block(value), strict=True,
+                        *read_block(value),
+                        strict=True,
                     ):
                         keys.append(
                             wrap_quotes(
-                                f"{key}{SEP}{block_k}", TYPE_CHAR[dtype],
+                                f"{key}{SEP}{block_k}",
+                                TYPE_CHAR[dtype],
                             ),
                         )
                         values.append(block_v)
@@ -93,11 +109,13 @@ def dict_to_list(data: Any) -> tuple[list[str], list[str]]:
                 # Will not run if no data to enumerate
                 for key, value in enumerate(data):
                     for block_k, block_v in zip(
-                        *read_block(value), strict=True,
+                        *read_block(value),
+                        strict=True,
                     ):
                         keys.append(
                             wrap_quotes(
-                                f"{key}{SEP}{block_k}", TYPE_CHAR[dtype],
+                                f"{key}{SEP}{block_k}",
+                                TYPE_CHAR[dtype],
                             ),
                         )
                         values.append(block_v)
@@ -106,7 +124,7 @@ def dict_to_list(data: Any) -> tuple[list[str], list[str]]:
                 values.append(str(data))
             case _ as dtype:
                 raise TypeError(
-                    f'Expected type {list_or(TYPE_CHAR)}, got "{dtype}"',
+                    f'Expected type {combine_end(TYPE_CHAR, "or")}, got "{dtype}"',
                 )
         return keys, values
 
@@ -115,6 +133,7 @@ def dict_to_list(data: Any) -> tuple[list[str], list[str]]:
 
 class Segment:
     """Segment with item. Basically like a pointer."""
+
     __slots__ = ("item",)
 
     def __init__(self, item: Any = None) -> None:
@@ -160,7 +179,10 @@ def list_to_dict(keys: list[str], values: list[str]) -> Any:
     """Convert split lists of compiled keys and values back into dictionary."""
 
     def handle_map(
-        segment: Segment, key: str, value: str, map_func: Callable[[Any], Any],
+        segment: Segment,
+        key: str,
+        value: str,
+        map_func: Callable[[Any], Any],
     ) -> None:
         """Unwrap key and either set segment item or continue to unwrap."""
         index = unwrap_quotes(key)
@@ -223,7 +245,7 @@ def list_to_dict(keys: list[str], values: list[str]) -> Any:
                 handle_map(segment, key, value, lambda x: None)
             case _ as dtype:
                 raise TypeError(
-                    f'Expected type {list_or(TYPE_CHAR)}, got "{dtype}"',
+                    f'Expected type {combine_end(TYPE_CHAR, "or")}, got "{dtype}"',
                 )
 
     data = Segment()
@@ -249,7 +271,118 @@ def run() -> None:
     ##    test_v = 'cat'
     ##    test_v = ['cat', 'bean', {3: 'mouse', 'mouse': 4}, 17]
     ##    test_v = [[[['cat', 0], 4], '8'], ['3', 'nine', ['14']]]
-    ##    test_v = {'success': True, 'result': {'file_id': 1609, 'publication_name': 'Notepad+', 'source_url': 'https://raw.githubusercontent.com/kogtyvPl/numpade/main/main.lua', 'path': 'Main.lua', 'version': 1.07, 'user_name': 'kogtyv', 'whats_new': 'Добавлены расширения файлов: .txt .num .ntxt .npd', 'whats_new_version': 1.07, 'category_id': 1, 'license_id': 1, 'timestamp': 1630854990, 'initial_description': 'Програма для редактирования текстовых файлов (.txt) идея: Bumer_32. приложение создал: kogtyv. Редактируй свои красивые тексты :)', 'translated_description': 'Програма для редактирования текстовых файлов (.txt) идея: Bumer_32. приложение создал: kogtyv. Редактируй свои красивые тексты :)', 'icon_url': 'https://raw.githubusercontent.com/kogtyvPl/numpade/main/Icon.pic', 'average_rating': 3.0, 'dependencies': [1610, 100, 1403, 1685, 1686, 1687, 1688], 'dependencies_data': {'100': {'source_url': 'https://raw.githubusercontent.com/IgorTimofeev/MineOS/master/Libraries/GUI.lua', 'path': 'GUI.lua', 'publication_name': 'GUI', 'category_id': 2, 'version': 1.83}, '73': {'source_url': 'https://raw.githubusercontent.com/IgorTimofeev/MineOS/master/Libraries/Image.lua', 'path': 'Image.lua', 'publication_name': 'Image', 'category_id': 2, 'version': 1.18}, '92': {'source_url': 'https://raw.githubusercontent.com/IgorTimofeev/MineOS/master/Libraries/Color.lua', 'path': 'Color.lua', 'publication_name': 'Color', 'category_id': 2, 'version': 1.14}, '1062': {'source_url': 'https://raw.githubusercontent.com/IgorTimofeev/MineOS/master/Libraries/Bit32.lua', 'path': 'Bit32.lua', 'publication_name': 'Bit32', 'category_id': 2, 'version': 1.01}, '97': {'source_url': 'https://raw.githubusercontent.com/IgorTimofeev/MineOS/master/Libraries/Screen.lua', 'path': 'Screen.lua', 'publication_name': 'Screen', 'category_id': 2, 'version': 1.21}, '1058': {'source_url': 'https://raw.githubusercontent.com/IgorTimofeev/MineOS/master/Libraries/Paths.lua', 'path': 'Paths.lua', 'publication_name': 'Paths', 'category_id': 2, 'version': 1.04}, '1059': {'source_url': 'https://raw.githubusercontent.com/IgorTimofeev/MineOS/master/Libraries/Text.lua', 'path': 'Text.lua', 'publication_name': 'Text', 'category_id': 2, 'version': 1.01}, '1060': {'source_url': 'https://raw.githubusercontent.com/IgorTimofeev/MineOS/master/Libraries/Number.lua', 'path': 'Number.lua', 'publication_name': 'Number', 'category_id': 2, 'version': 1.01}, '1403': {'source_url': 'https://raw.githubusercontent.com/IgorTimofeev/MineOS/master/Libraries/Filesystem.lua', 'path': 'Filesystem.lua', 'publication_name': 'Filesystem', 'category_id': 2, 'version': 1.02}, '1610': {'source_url': 'https://raw.githubusercontent.com/kogtyvPl/numpade/main/Icon.pic', 'path': 'Icon.pic', 'version': 1.07}, '1685': {'source_url': 'https://github.com/kogtyvPl/numpade/raw/main/Extensions%20files/num/Icon.pic', 'path': 'Extensions/.num/Icon.pic', 'version': 1}, '1686': {'source_url': 'https://github.com/kogtyvPl/numpade/raw/main/Extensions%20files/txt/Icon.pic', 'path': 'Extensions/.txt/Icon.pic', 'version': 1}, '1687': {'source_url': 'https://github.com/kogtyvPl/numpade/raw/main/Extensions%20files/npd/Icon.pic', 'path': 'Extensions/.npd/Icon.pic', 'version': 1}, '1688': {'source_url': 'https://github.com/kogtyvPl/numpade/raw/main/Extensions%20files/ntxt/Icon.pic', 'path': 'Extensions/.ntxt/Icon.pic', 'version': 1}}, 'all_dependencies': [100, 73, 92, 1062, 97, 1058, 1059, 1060, 1403, 1610, 1685, 1686, 1687, 1688]}}
+    test_v = {
+        "success": True,
+        "result": {
+            "file_id": 1609,
+            "publication_name": "Notepad+",
+            "source_url": "https://raw.githubusercontent.com/kogtyvPl/numpade/main/main.lua",
+            "path": "Main.lua",
+            "version": 1.07,
+            "user_name": "kogtyv",
+            "whats_new": "Добавлены расширения файлов: .txt .num .ntxt .npd",
+            "whats_new_version": 1.07,
+            "category_id": 1,
+            "license_id": 1,
+            "timestamp": 1630854990,
+            "initial_description": "Програма для редактирования текстовых файлов (.txt) идея: Bumer_32. приложение создал: kogtyv. Редактируй свои красивые тексты :)",
+            "translated_description": "Програма для редактирования текстовых файлов (.txt) идея: Bumer_32. приложение создал: kogtyv. Редактируй свои красивые тексты :)",
+            "icon_url": "https://raw.githubusercontent.com/kogtyvPl/numpade/main/Icon.pic",
+            "average_rating": 3.0,
+            "dependencies": [1610, 100, 1403, 1685, 1686, 1687, 1688],
+            "dependencies_data": {
+                "100": {
+                    "source_url": "https://raw.githubusercontent.com/IgorTimofeev/MineOS/master/Libraries/GUI.lua",
+                    "path": "GUI.lua",
+                    "publication_name": "GUI",
+                    "category_id": 2,
+                    "version": 1.83,
+                },
+                "73": {
+                    "source_url": "https://raw.githubusercontent.com/IgorTimofeev/MineOS/master/Libraries/Image.lua",
+                    "path": "Image.lua",
+                    "publication_name": "Image",
+                    "category_id": 2,
+                    "version": 1.18,
+                },
+                "92": {
+                    "source_url": "https://raw.githubusercontent.com/IgorTimofeev/MineOS/master/Libraries/Color.lua",
+                    "path": "Color.lua",
+                    "publication_name": "Color",
+                    "category_id": 2,
+                    "version": 1.14,
+                },
+                "1062": {
+                    "source_url": "https://raw.githubusercontent.com/IgorTimofeev/MineOS/master/Libraries/Bit32.lua",
+                    "path": "Bit32.lua",
+                    "publication_name": "Bit32",
+                    "category_id": 2,
+                    "version": 1.01,
+                },
+                "97": {
+                    "source_url": "https://raw.githubusercontent.com/IgorTimofeev/MineOS/master/Libraries/Screen.lua",
+                    "path": "Screen.lua",
+                    "publication_name": "Screen",
+                    "category_id": 2,
+                    "version": 1.21,
+                },
+                "1058": {
+                    "source_url": "https://raw.githubusercontent.com/IgorTimofeev/MineOS/master/Libraries/Paths.lua",
+                    "path": "Paths.lua",
+                    "publication_name": "Paths",
+                    "category_id": 2,
+                    "version": 1.04,
+                },
+                "1059": {
+                    "source_url": "https://raw.githubusercontent.com/IgorTimofeev/MineOS/master/Libraries/Text.lua",
+                    "path": "Text.lua",
+                    "publication_name": "Text",
+                    "category_id": 2,
+                    "version": 1.01,
+                },
+                "1060": {
+                    "source_url": "https://raw.githubusercontent.com/IgorTimofeev/MineOS/master/Libraries/Number.lua",
+                    "path": "Number.lua",
+                    "publication_name": "Number",
+                    "category_id": 2,
+                    "version": 1.01,
+                },
+                "1403": {
+                    "source_url": "https://raw.githubusercontent.com/IgorTimofeev/MineOS/master/Libraries/Filesystem.lua",
+                    "path": "Filesystem.lua",
+                    "publication_name": "Filesystem",
+                    "category_id": 2,
+                    "version": 1.02,
+                },
+                "1610": {
+                    "source_url": "https://raw.githubusercontent.com/kogtyvPl/numpade/main/Icon.pic",
+                    "path": "Icon.pic",
+                    "version": 1.07,
+                },
+                "1685": {
+                    "source_url": "https://github.com/kogtyvPl/numpade/raw/main/Extensions%20files/num/Icon.pic",
+                    "path": "Extensions/.num/Icon.pic",
+                    "version": 1,
+                },
+                "1686": {
+                    "source_url": "https://github.com/kogtyvPl/numpade/raw/main/Extensions%20files/txt/Icon.pic",
+                    "path": "Extensions/.txt/Icon.pic",
+                    "version": 1,
+                },
+                "1687": {
+                    "source_url": "https://github.com/kogtyvPl/numpade/raw/main/Extensions%20files/npd/Icon.pic",
+                    "path": "Extensions/.npd/Icon.pic",
+                    "version": 1,
+                },
+                "1688": {
+                    "source_url": "https://github.com/kogtyvPl/numpade/raw/main/Extensions%20files/ntxt/Icon.pic",
+                    "path": "Extensions/.ntxt/Icon.pic",
+                    "version": 1,
+                },
+            },
+            "all_dependencies": [100, 73, 92, 1062, 97, 1058, 1059, 1060, 1403, 1610, 1685, 1686, 1687, 1688],
+        },
+    }
     print(f"{test_v = }\n")
     keys, values = dict_to_list(test_v)
     ##    print((keys, values))
