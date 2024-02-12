@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""TITLE - DESCRIPTION"""
+"""TITLE - DESCRIPTION."""
 
 # Programmed by CoolCat467
 
@@ -29,7 +29,7 @@ __license__ = "GNU General Public License Version 3"
 
 
 def run() -> None:
-    """Run program"""
+    """Run program."""
 
 
 if __name__ == "__main__":

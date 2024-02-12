@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # TimeUtils
 
-"""Utilities for Time"""
+"""Utilities for Time."""
 
 # Programmed by CoolCat467
 
@@ -21,7 +21,7 @@ F = TypeVar("F", bound=Callable[..., Any])
 
 
 def timed(func: F) -> F:
-    """Wrapper to time how long func takes"""
+    """Wrapper to time how long func takes."""
 
     @wraps(func)
     def time_func(*args: Any, **kwargs: Any) -> Any:
@@ -39,7 +39,7 @@ C = TypeVar("C", bound=Callable[..., Awaitable[Any]])
 
 
 def async_timed(func: C) -> C:
-    """Wrapper to time how long func takes"""
+    """Wrapper to time how long func takes."""
 
     @wraps(func)
     async def time_func(*args: Any, **kwargs: Any) -> Any:
@@ -122,11 +122,10 @@ def format_time(seconds: int, single_title_allowed: bool = False) -> str:
     single[5] = "century"
     split = split_time(seconds)
     zip_idx_values = [(i, v) for i, v in enumerate(split) if v]
-    if single_title_allowed:
-        if len(zip_idx_values) == 1:
-            index, value = zip_idx_values[0]
-            if value == 1:
-                return "a " + single[index]
+    if single_title_allowed and len(zip_idx_values) == 1:
+        index, value = zip_idx_values[0]
+        if value == 1:
+            return "a " + single[index]
     data = []
     for index, value in zip_idx_values:
         title = single[index] if abs(value) < 2 else times[index]
@@ -135,7 +134,7 @@ def format_time(seconds: int, single_title_allowed: bool = False) -> str:
 
 
 def run() -> None:
-    """Run as main"""
+    """Run as main."""
 
 
 if __name__ == "__main__":

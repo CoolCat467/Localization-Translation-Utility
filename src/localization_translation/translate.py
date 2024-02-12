@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-"""Tiny translator module"""
+"""Tiny translator module."""
+from __future__ import annotations
 
 __title__ = "Tiny translator module"
 __author__ = "CoolCat467"
@@ -9,14 +10,16 @@ __author__ = "CoolCat467"
 import json
 import random
 import urllib.request
-from collections.abc import Coroutine, Sequence
 from functools import partial
-from typing import Any, Final
+from typing import TYPE_CHECKING, Any, Final
 from urllib.parse import urlencode
 
 import agents
 import httpx
 import trio
+
+if TYPE_CHECKING:
+    from collections.abc import Coroutine, Sequence
 
 TIMEOUT: Final[int] = 4
 AGENT = random.randint(0, 100000)  # noqa: S311
@@ -71,6 +74,7 @@ def process_response(result: list[str] | list[list[Any]]) -> str:
             part = next_
         else:
             raise ValueError(f"Unexpected type {type(part)!r}, expected list or str")
+    return None
 
 
 def is_url(text: str) -> bool:
@@ -79,7 +83,7 @@ def is_url(text: str) -> bool:
 
 
 def translate_sync(sentence: str | int, to_lang: str, source_lang: str = "auto") -> str | int:
-    """Synchronously perform translation of sentence from source_lang to to_lang"""
+    """Synchronously perform translation of sentence from source_lang to to_lang."""
     if isinstance(sentence, int) or is_url(sentence):
         # skip numbers and URLs
         return sentence
@@ -147,7 +151,7 @@ async def translate_async(
 
 
 async def async_run() -> None:
-    """Async entry point"""
+    """Async entry point."""
     async with httpx.AsyncClient(http2=True) as client:
         input_ = ["cat is bob", "bob is a potato"]
         print(f"{input_ = }")
@@ -156,7 +160,7 @@ async def async_run() -> None:
 
 
 def run() -> None:
-    """Main entry point"""
+    """Main entry point."""
     # import trio.testing
     trio.run(async_run)  # , clock=trio.testing.MockClock(autojump_threshold=0))
 

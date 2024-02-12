@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Lolcat Translator - Scrape lolcat translation website
 
-"""Lolcat Translator"""
+"""Lolcat Translator."""
 
 # Programmed by CoolCat467
 
@@ -11,13 +11,15 @@ __title__ = "Lolcat Scraper"
 __author__ = "CoolCat467"
 __version__ = "0.0.0"
 
-from collections.abc import Sequence
 from html.parser import HTMLParser
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import extricate
 import mechanicalsoup
 import trio
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 async def gather(*tasks: Sequence) -> list:
@@ -35,7 +37,7 @@ async def gather(*tasks: Sequence) -> list:
 
 
 class ResponseParser(HTMLParser):
-    """Find tag with id and set self.value to data"""
+    """Find tag with id and set self.value to data."""
 
     def __init__(self, tag_type: str, search_id: str) -> None:
         super().__init__()
@@ -46,7 +48,7 @@ class ResponseParser(HTMLParser):
         self.value: str | None = None
 
     def handle_starttag(self, tag: str, attrs: list) -> None:
-        """Set found to True if tag type and id matches search"""
+        """Set found to True if tag type and id matches search."""
         if tag == self.search_tag_type:
             creation = dict(attrs)
             if "id" not in creation:
@@ -55,18 +57,18 @@ class ResponseParser(HTMLParser):
                 self.found = True
 
     def handle_data(self, data: str) -> None:
-        """Set value to value if currently handling target"""
+        """Set value to value if currently handling target."""
         if self.found:
             self.value = data
 
     def handle_endtag(self, tag: str) -> None:
-        """Set found to false if end of search tag"""
+        """Set found to false if end of search tag."""
         if tag == self.search_tag_type and self.found:
             self.found = False
 
 
 def translate_sentence(sentence: str) -> str:
-    """Translate sentence"""
+    """Translate sentence."""
     browser = mechanicalsoup.StatefulBrowser()
     browser.open("https://funtranslations.com/lolcat")
     browser.select_form("form#textform")
@@ -97,7 +99,7 @@ def translate_sentence(sentence: str) -> str:
 
 
 def translate_block(sentences: list[str], threshold: int = 2048) -> list[str]:
-    """Translate sentences in bulk in batches if very big"""
+    """Translate sentences in bulk in batches if very big."""
     sep = "^&^"
     result = []
     to_translate = list(reversed(sentences))
@@ -130,7 +132,7 @@ def translate_file(english: dict, block_threshold: int = 2048) -> dict:
 
 
 def run() -> None:
-    """Run test of module"""
+    """Run test of module."""
     text = [
         "This is hearsay!",
         "I am the way, the truth, and the life. No one comes to God except through me.",

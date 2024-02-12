@@ -1,4 +1,4 @@
-"""User-Agents list
+"""User-Agents list.
 
 Anime no Sekai 2021
 
@@ -7538,5 +7538,5 @@ USER_AGENTS: Final = (
 
 
 def get_agent() -> str:
-    """Return random user agent"""
+    """Return random user agent."""
     return random.choice(USER_AGENTS)  # noqa: S311

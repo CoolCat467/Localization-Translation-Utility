@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # CSV Translate - Translate the Nanosaur Strings CSV file
 
-"""CSV Translate"""
+"""CSV Translate."""
 
 # Programmed by CoolCat467
 
@@ -100,7 +100,7 @@ async def translate_file(
 
 
 class Nanosaur(csv.Dialect):
-    """Nanosaur dialect"""
+    """Nanosaur dialect."""
 
     delimiter = ","
     doublequote = False
@@ -115,7 +115,7 @@ csv.register_dialect("nanosaur", Nanosaur)
 
 
 def read_nanosaur_localization(csv_file: io.IOBase) -> dict[str, list[str]]:
-    """Read nanosaur localization file"""
+    """Read nanosaur localization file."""
     names = csv_file.readline().strip().split(",")
     reader = csv.reader(csv_file, dialect="nanosaur")
     languages: dict[str, list[str]] = {name: [] for name in names}
@@ -135,7 +135,7 @@ def read_nanosaur_localization(csv_file: io.IOBase) -> dict[str, list[str]]:
 
 
 def write_nanosaur_localization(filename: str, languages: dict[str, list[str]]) -> None:
-    """Write nanosaur localization file"""
+    """Write nanosaur localization file."""
     with open(filename, "w", encoding="utf-8") as csv_file:
         writer = csv.writer(csv_file, dialect="nanosaur")
         names = list(languages)
@@ -157,7 +157,7 @@ def write_nanosaur_localization(filename: str, languages: dict[str, list[str]]) 
 
 
 async def create_translation(languages: dict[str, list[str]], code: str, client: httpx.AsyncClient) -> None:
-    """Add translation for language with given code to languages dictionary"""
+    """Add translation for language with given code to languages dictionary."""
     result = await translate_file(languages["English"], client, code, "en")
     title = LANGUAGES[code].title()
     languages[title] = result
@@ -165,7 +165,7 @@ async def create_translation(languages: dict[str, list[str]], code: str, client:
 
 
 async def async_run() -> None:
-    """Run program"""
+    """Run program."""
     cache = os.path.join(os.path.split(__file__)[0], "cache")
     async with httpx.AsyncClient(http2=True) as client:
         contents = await download_file("Data/System/strings.csv", cache, client)
@@ -181,7 +181,7 @@ async def async_run() -> None:
 
 
 def run() -> None:
-    """Main entry point"""
+    """Main entry point."""
     trio.run(async_run)
 
 

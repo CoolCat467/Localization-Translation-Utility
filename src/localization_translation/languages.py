@@ -2,7 +2,7 @@
 # Language globals
 # -*- coding: utf-8 -*-
 
-"""Language Globals"""
+"""Language Globals."""
 
 ##The MIT License (MIT)
 ##
@@ -138,4 +138,4 @@ LANGUAGES = {
     "zu": "zulu",
 }
 
-LANGCODES = dict((value, key) for key, value in LANGUAGES.items())
+LANGCODES = {value: key for key, value in LANGUAGES.items()}

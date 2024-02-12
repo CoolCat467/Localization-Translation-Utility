@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Auto Translate localization files for MineOS
 
-"""Auto Translate localization files for MineOS"""
+"""Auto Translate localization files for MineOS."""
 
 # Programmed by CoolCat467
 
@@ -133,7 +133,7 @@ async def download_file(path: str, cache_dir: str, client: httpx.AsyncClient) ->
 
 
 async def download_lang(path: str, cache_dir: str, client: httpx.AsyncClient) -> tuple[dict, dict]:
-    """Download file from MineOS repository and decode as lang file. Return dict and comments"""
+    """Download file from MineOS repository and decode as lang file. Return dict and comments."""
     return convert.lang_to_json(await download_file(path, cache_dir, client))
 
 
@@ -146,7 +146,7 @@ def split(path: str) -> tuple[str, str]:
 
 
 def section_to_walk(section: list) -> tuple:
-    """Return folder and files from section"""
+    """Return folder and files from section."""
     dirs: dict[str, list[str]] = {}
     for full_path in section:
         path, filename = split(full_path)
@@ -195,7 +195,7 @@ async def abstract_translate(
     get_unhandled: Callable[[set[str], str], set[str]],
     trans_coro: Callable[[dict[str, Any], str, str], Awaitable[dict[str, str]]],
 ) -> None:
-    """Main translate"""
+    """Main translate."""
     ignore_languages = {
         "chinese (traditional)",
     }
@@ -282,7 +282,7 @@ async def abstract_translate(
 
 
 async def translate_main(client: httpx.AsyncClient) -> None:
-    """Translate with google translate"""
+    """Translate with google translate."""
     here_folder = os.path.split(__file__)[0]
     base_lang = os.path.join(here_folder, "Upload")
     cache_folder = os.path.join(here_folder, "cache")
@@ -300,7 +300,7 @@ async def translate_main(client: httpx.AsyncClient) -> None:
 
 
 async def translate_new_value(client: httpx.AsyncClient, key: str, folder: str) -> None:
-    """Translate with google translate"""
+    """Translate with google translate."""
     here_folder = os.path.split(__file__)[0]
     base_lang = os.path.join(here_folder, "Upload")
     cache_folder = os.path.join(here_folder, "cache")
@@ -330,11 +330,10 @@ async def translate_new_value(client: httpx.AsyncClient, key: str, folder: str) 
 
 
 def fix_translation(original: str, value: str) -> str:
-    """Fix translation"""
-    if original.strip()[0].isupper():
-        if " " in value:
-            pre, end = value.split(" ", 1)
-            value = f"{pre.title()} {end}"
+    """Fix translation."""
+    if original.strip()[0].isupper() and " " in value:
+        pre, end = value.split(" ", 1)
+        value = f"{pre.title()} {end}"
     if original.startswith(" ") and not value.startswith(" "):
         value = " " + value
     if original.endswith(" ") and not value.endswith(" "):
@@ -345,7 +344,7 @@ def fix_translation(original: str, value: str) -> str:
 
 
 async def translate_broken_values(client: httpx.AsyncClient) -> None:
-    """Translate with google translate"""
+    """Translate with google translate."""
     here_folder = os.path.split(__file__)[0]
     base_lang = os.path.join(here_folder, "Upload")
     cache_folder = os.path.join(here_folder, "cache")
@@ -369,7 +368,7 @@ async def translate_broken_values(client: httpx.AsyncClient) -> None:
 
         ##        translated = await translate_file(english, client, code, 'en')
         async def translate_single(key: str) -> None:
-            """Translate single value"""
+            """Translate single value."""
             ##            print(f'{english[key] = }')
             if not isinstance(english[key], str):
                 return
@@ -396,7 +395,7 @@ async def translate_broken_values(client: httpx.AsyncClient) -> None:
 
 
 async def translate_lolcat(client: httpx.AsyncClient) -> None:
-    """Translate with website"""
+    """Translate with website."""
     # https://funtranslations.com/lolcat
 
     here_folder = os.path.split(__file__)[0]
@@ -413,7 +412,7 @@ async def translate_lolcat(client: httpx.AsyncClient) -> None:
 
 
 async def async_run() -> None:
-    """Async entry point"""
+    """Async entry point."""
     async with httpx.AsyncClient(http2=True) as client:
         # await translate_main(client)
         await translate_broken_values(client)
@@ -424,7 +423,7 @@ async def async_run() -> None:
 
 
 def run() -> None:
-    """Main entry point"""
+    """Main entry point."""
     # import trio.testing
     trio.run(async_run, strict_exception_groups=True)
     # , clock=trio.testing.MockClock(autojump_threshold=0))

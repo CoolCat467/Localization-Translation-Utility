@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Lolcat Translator - Scrape lolcat translation website
 
-"""Lolcat Translator"""
+"""Lolcat Translator."""
 
 # Programmed by CoolCat467
 
@@ -24,12 +24,12 @@ with open("tranzlashun.json", encoding="utf-8") as trans_file:
 
 
 def match_case(orig: str, new: str) -> str:
-    """Mace new first char match case of orig first char"""
+    """Mace new first char match case of orig first char."""
     if not new or not orig:
         return new
     if orig.endswith(" ") and not new.endswith(" "):
         new += " "
-    if all([x.isupper() for x in orig]):
+    if all(x.isupper() for x in orig):
         return new.upper()
     up = orig[0].isupper()
     if up and not new[0].isupper():
@@ -68,7 +68,7 @@ IGNORE_CHANGE = set()
 
 
 def add_unchanged() -> None:
-    """Update translation dictionary from lolcat scraper"""
+    """Update translation dictionary from lolcat scraper."""
     global IGNORE_CHANGE
     import lolcatscraper
 
@@ -96,7 +96,7 @@ def add_unchanged() -> None:
 
 
 def translate_block(sentences: list[str]) -> list[str]:
-    """Translate sentences in bulk in batches if very big"""
+    """Translate sentences in bulk in batches if very big."""
     return [translate_sentence(sentence) for sentence in sentences]
 
 
@@ -118,7 +118,7 @@ def translate_file(english: dict) -> dict:
 
 
 def run() -> None:
-    """Run test of module"""
+    """Run test of module."""
     text = [
         "This is hearsay!",
         "I am the way, the truth, and the life. No one comes to God except through me.",

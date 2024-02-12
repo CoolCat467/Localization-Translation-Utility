@@ -1,4 +1,4 @@
-"""Convert - Lua Table Conversion to and from Python Dictionaries"""
+"""Convert - Lua Table Conversion to and from Python Dictionaries."""
 
 # Programmed by CoolCat467
 
@@ -29,18 +29,18 @@ from typing import Any
 
 
 def squish(text: str) -> str:
-    """Remove all newlines and tabs from text"""
+    """Remove all newlines and tabs from text."""
     return text.translate({10: "", 9: ""})
 
 
 def split_squished(squished_text: str) -> str:
-    """Split text with {} and , with no indent or newlines into separate lines"""
+    """Split text with {} and , with no indent or newlines into separate lines."""
     lines = []
     indent = 0
     cline = ""
 
     def cartrage_return() -> None:
-        """Add current line with indent"""
+        """Add current line with indent."""
         nonlocal cline
         lines.append("\t" * indent + f"{cline}\n")
         cline = ""
@@ -218,7 +218,7 @@ def lang_to_json(
 def dict_to_lang(
     data: dict[str, Any], comments: dict[str, dict[int, str]],
 ) -> str:
-    """Convert data and comments to MineOS file data"""
+    """Convert data and comments to MineOS file data."""
     json_data = json.dumps(
         data, ensure_ascii=False, indent="\t", separators=(",", " = "),
     )
@@ -252,14 +252,8 @@ def dict_to_lang(
             if path in comments:
                 for offset, comment in comments[path].items():
                     pos = sec_start + offset
-                    if pos >= len(new_lines):
-                        indent = ""
-                    else:
-                        indent = new_lines[pos].count("\t") * "\t"
-                    if comment:
-                        comment = f"{indent}-- {comment}"
-                    else:
-                        comment = indent
+                    indent = "" if pos >= len(new_lines) else new_lines[pos].count("\t") * "\t"
+                    comment = f"{indent}-- {comment}" if comment else indent
                     new_lines.insert(pos, comment)
 
         if " = " in line:
@@ -285,15 +279,9 @@ def dict_to_lang(
         if path in comments:
             for offset, comment in comments[path].items():
                 pos = sec_start + offset
-                if pos >= len(new_lines):
-                    indent = ""
-                else:
-                    indent = new_lines[pos].count("\t") * "\t"
+                indent = "" if pos >= len(new_lines) else new_lines[pos].count("\t") * "\t"
 
-                if comment:
-                    comment = f"{indent}-- {comment}"
-                else:
-                    comment = indent
+                comment = f"{indent}-- {comment}" if comment else indent
                 new_lines.insert(pos, comment)
 
     return "\n".join(new_lines)
@@ -304,7 +292,7 @@ def update_comment_positions(
     new_data: dict[str, Any],
     old_data: dict[str, Any],
 ) -> dict[str, dict[int, str]]:
-    """Update comment positions"""
+    """Update comment positions."""
     # Get json text of files
     old_json = json.dumps(old_data, indent="\t").splitlines()
     new_json = json.dumps(new_data, indent="\t").splitlines()
@@ -365,7 +353,7 @@ def update_comment_positions(
 def read_lang_file(
     filepath: str,
 ) -> tuple[dict[str, Any], dict[str, dict[int, str]]]:
-    """Read MineOS data file"""
+    """Read MineOS data file."""
     with open(filepath, encoding="utf-8") as file_point:
         fdata = file_point.read()
     return lang_to_json(fdata)
@@ -374,7 +362,7 @@ def read_lang_file(
 def write_lang_file(
     filepath: str, data: dict[str, Any], comments: dict[str, dict[int, str]],
 ) -> None:
-    """Write MineOS data file"""
+    """Write MineOS data file."""
     with open(filepath, "w", encoding="utf-8") as file_point:
         file_point.write(dict_to_lang(data, comments))
 
