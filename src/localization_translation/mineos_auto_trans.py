@@ -141,12 +141,12 @@ async def download_file(path: str, cache_dir: str, client: httpx.AsyncClient) ->
         response = await download_coroutine(client, mineos_url(path))
         # j_resp = json.loads(response)
         # data = base64.b64decode(j_resp['content'])
-        with open(real_path, "wb") as file:  # noqa: ASYNC101
+        with open(real_path, "wb") as file:
             file.write(response)
         await trio.sleep(1)
         return response.decode("utf-8")
     print(f"Loaded {path} from cache")
-    with open(real_path, encoding="utf-8") as file:  # noqa: ASYNC101
+    with open(real_path, encoding="utf-8") as file:
         return file.read()
 
 
