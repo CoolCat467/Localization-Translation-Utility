@@ -141,12 +141,12 @@ async def download_file(path: str, cache_dir: str, client: httpx.AsyncClient) ->
         response = await download_coroutine(client, mineos_url(path))
         # j_resp = json.loads(response)
         # data = base64.b64decode(j_resp['content'])
-        with open(real_path, "wb") as file:  # noqa: ASYNC101
+        with open(real_path, "wb") as file:  # noqa: ASYNC230
             file.write(response)
         await trio.sleep(1)
         return response.decode("utf-8")
     print(f"Loaded {path} from cache")
-    with open(real_path, encoding="utf-8") as file:  # noqa: ASYNC101
+    with open(real_path, encoding="utf-8") as file:  # noqa: ASYNC230
         return file.read()
 
 
@@ -329,9 +329,9 @@ async def translate_new_value(client: httpx.AsyncClient, key: str, folder: str) 
     base_lang = os.path.join(here_folder, "mineos_upload")
     cache_folder = os.path.join(here_folder, "mineos_cache")
 
-    def get_unhandled(handled: set, lang_folder: str) -> set[str]:
+    def get_unhandled(handled: set[str], lang_folder: str) -> set[str]:
         if lang_folder == folder:
-            return handled.difference({"chinese (traditional)", "english", "lolcat"})
+            return handled - {"chinese (traditional)", "english", "lolcat"}
         return set()
 
     async def trans_coro(english: dict, to_lang: str, folder: str) -> dict:
@@ -355,6 +355,8 @@ async def translate_new_value(client: httpx.AsyncClient, key: str, folder: str) 
 
 def fix_translation(original: str, value: str) -> str:
     """Fix translation."""
+    if original.upper() == value.upper():
+        return original
     if original.strip()[0].isupper() and " " in value:
         pre, end = value.split(" ", 1)
         value = f"{pre.title()} {end}"
@@ -391,25 +393,28 @@ async def translate_broken_values(client: httpx.AsyncClient) -> None:
         code = languages.LANGCODES[to_lang]
 
         ##        translated = await translate_file(english, client, code, 'en')
+        modified = False
+
         async def translate_single(key: str) -> None:
             """Translate single value."""
+            nonlocal modified
             ##            print(f'{english[key] = }')
             if not isinstance(english[key], str):
                 return
             value = await translate.get_translated_coroutine(client, english[key], code, "en")
             value = fix_translation(english[key], value)
-            if value != data[key]:
-                print(f"{data[key]!r} -> {value!r}")
+            if value != data.get(key):
+                print(f"{data.get(key)!r} -> {value!r}")
+                modified = True
             data[key] = value
 
-        modified = False
         async with trio.open_nursery() as nursery:
-            for key in data:
-                if data[key] == english[key] or key == data[key]:
+            for key in english:
+                existing = data.get(key)
+                if existing is None or existing == english[key] or key == existing:
                     # print(f'{data[key]!r} -> {translated[key]!r}')
                     # data[key] = translated[key]
                     nursery.start_soon(translate_single, key)
-                    modified = True
 
         if modified:
             return data
