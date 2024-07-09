@@ -211,7 +211,11 @@ def lang_to_json(
         new_lines.append(line)
     json_text = "\n".join(new_lines)
     # print(json_text)
-    return json.loads(json_text), comments
+    try:
+        return json.loads(json_text), comments
+    except json.JSONDecodeError:
+        print(json_text)
+        raise
 
 
 def dict_to_lang(
