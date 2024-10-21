@@ -32,6 +32,7 @@ import os
 
 import httpx
 import trio
+
 from localization_translation import translate
 from localization_translation.languages import LANGUAGES
 
