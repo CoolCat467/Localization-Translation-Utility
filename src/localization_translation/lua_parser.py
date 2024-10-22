@@ -578,7 +578,7 @@ def parse_lua_table(table_value: Value[Any], convert_lists: bool = True) -> tupl
 
     def read_value(value: Value[object]) -> object:
         """Read value base function."""
-        assert isinstance(value, Value)
+        assert isinstance(value, Value), value
         if value.name in {
             "String",
             "Boolean",
