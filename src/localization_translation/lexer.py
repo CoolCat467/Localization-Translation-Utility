@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 class Token:
     """Lexer Token class."""
 
-    __slots__ = ("type", "regex")
+    __slots__ = ("regex", "type")
 
     def __init__(self, token_type: str | int, regex: re.Pattern | str) -> None:
         """Initialize Token."""
@@ -63,7 +63,7 @@ class Token:
 class Lexer:
     """Text lexer."""
 
-    __slots__ = ("tokens", "input")
+    __slots__ = ("input", "tokens")
 
     def __init__(self) -> None:
         """Initialize Lexer."""

@@ -1,10 +1,10 @@
-"""Lua Convert Parser - Properly parse lua and rebuild perfectly, no more json shenanigins."""
+"""Lua Convert Parser - Properly parse lua and rebuild perfectly, no more json shenanigans."""
 
 # Programmed by CoolCat467
 
 from __future__ import annotations
 
-# Lua Convert Parser - Properly parse lua and rebuild perfectly, no more json shenanigins
+# Lua Convert Parser - Properly parse lua and rebuild perfectly, no more json shenanigans
 # Copyright (C) 2024  CoolCat467
 #
 # This program is free software: you can redistribute it and/or modify
