@@ -586,6 +586,7 @@ def parse_lua_table(table_value: Value[Any], convert_lists: bool = True) -> tupl
             "Integer",
             "Identifier",
         }:
+            assert value.from_token is not None
             from_tokens.append(value.from_token)
             return value.args[0]
         if value.name == "Table":
@@ -609,6 +610,7 @@ def parse_lua_table(table_value: Value[Any], convert_lists: bool = True) -> tupl
     ) -> tuple[str, object]:
         """Read an Assignment value."""
         assert value.name == "Assignment"
+        assert value.from_token is not None
         from_tokens.append(value.from_token)
         key, data = value.args
         return (read_value(key), read_value(data))  # type: ignore[return-value]
@@ -624,6 +626,7 @@ def parse_lua_table(table_value: Value[Any], convert_lists: bool = True) -> tupl
         # if value.name == "Indexed":
         #    return (str(len(table)), read_value(value.args[0]))
         if value.name == "Field":
+            assert value.from_token is not None
             from_tokens.append(value.from_token)
             field, field_value = value.args
             assert isinstance(field, Value)
@@ -638,6 +641,7 @@ def parse_lua_table(table_value: Value[Any], convert_lists: bool = True) -> tupl
     ) -> dict[str | int, object] | list[object]:
         """Read a table and all of it's fields."""
         assert value.name == "Table"
+        assert value.from_token is not None
         from_tokens.append(value.from_token)
         table: dict[str | int, object] = {}
 
@@ -659,6 +663,7 @@ def parse_lua_table(table_value: Value[Any], convert_lists: bool = True) -> tupl
         return [table[i + 1] for i in range(len(table))]
 
     def read_keyword(value: Value[str]) -> object:
+        assert value.from_token is not None
         from_tokens.append(value.from_token)
         if value.args[0] == "nil":
             return None

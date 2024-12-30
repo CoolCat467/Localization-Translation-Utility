@@ -39,7 +39,7 @@ class Token:
 
     __slots__ = ("regex", "type")
 
-    def __init__(self, token_type: str | int, regex: re.Pattern | str) -> None:
+    def __init__(self, token_type: str | int, regex: re.Pattern[str] | str) -> None:
         """Initialize Token."""
         self.type = token_type
         if not isinstance(regex, re.Pattern):

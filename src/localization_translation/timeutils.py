@@ -27,18 +27,24 @@ __license__ = "GNU General Public License Version 3"
 
 
 import time
-from collections.abc import Awaitable, Callable, Iterable
 from functools import wraps
-from typing import Any, TypeVar, cast
+from typing import TYPE_CHECKING, TypeVar
 
-F = TypeVar("F", bound=Callable[..., Any])
+if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable, Iterable
+
+    from typing_extensions import ParamSpec
+
+    PS = ParamSpec("PS")
+
+T = TypeVar("T")
 
 
-def timed(func: F) -> F:
+def timed(func: Callable[PS, T]) -> Callable[PS, T]:
     """Wrap function and print how long it took to run."""
 
     @wraps(func)
-    def time_func(*args: Any, **kwargs: Any) -> Any:
+    def time_func(*args: PS.args, **kwargs: PS.kwargs) -> T:
         start = time.perf_counter_ns()
         result = func(*args, **kwargs)
         stop = time.perf_counter_ns()
@@ -46,17 +52,14 @@ def timed(func: F) -> F:
         print(f"\n{func.__name__} took {call_elapsed:.4f} nanoseconds.\n")
         return result
 
-    return cast(F, time_func)
+    return time_func
 
 
-C = TypeVar("C", bound=Callable[..., Awaitable[Any]])
-
-
-def async_timed(func: C) -> C:
+def async_timed(func: Callable[PS, Awaitable[T]]) -> Callable[PS, Awaitable[T]]:
     """Wrap function and print how long it took to run."""
 
     @wraps(func)
-    async def time_func(*args: Any, **kwargs: Any) -> Any:
+    async def time_func(*args: PS.args, **kwargs: PS.kwargs) -> T:
         start = time.perf_counter()
         result = await func(*args, **kwargs)
         stop = time.perf_counter()
@@ -64,14 +67,14 @@ def async_timed(func: C) -> C:
         print(f"\n{func.__name__} took {call_elapsed:.4f} seconds.\n")
         return result
 
-    return cast(C, time_func)
+    return time_func
 
 
 def split_time(seconds: int) -> list[int]:
     """Split time into decades, years, months, weeks, days, hours, minutes, and seconds."""
     seconds = int(seconds)
 
-    def mod_time(sec: int, num: int) -> tuple:
+    def mod_time(sec: int, num: int) -> tuple[int, int]:
         """Return number of times sec divides equally by number, then remainder."""
         smod = sec % num
         return int((sec - smod) // num), smod
@@ -97,7 +100,7 @@ def split_time(seconds: int) -> list[int]:
         60,
         1,
     )
-    ret = []
+    ret: list[int] = []
     for num in divs:
         edivs, seconds = mod_time(seconds, num)
         ret.append(edivs)

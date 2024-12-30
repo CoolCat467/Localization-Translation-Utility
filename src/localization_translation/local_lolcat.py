@@ -27,10 +27,12 @@ __license__ = "GNU General Public License Version 3"
 
 
 import json
-from typing import Final
+from typing import Final, TypeVar
 
 import extricate
 import lexer
+
+T = TypeVar("T")
 
 LEXER: Final = lexer.Lexer()
 LEXER.add_token(lexer.Token("text", "[a-z|A-Z]+"))
@@ -56,7 +58,7 @@ def match_case(orig: str, new: str) -> str:
     return new
 
 
-UNCHANGED = set()
+UNCHANGED: set[str] = set()
 
 
 def translate_sentence(sentence: str) -> str:
@@ -81,7 +83,7 @@ def translate_sentence(sentence: str) -> str:
     return " ".join(new_sentence)
 
 
-IGNORE_CHANGE = set()
+IGNORE_CHANGE: set[str] = set()
 
 
 def add_unchanged() -> None:
@@ -117,7 +119,7 @@ def translate_block(sentences: list[str]) -> list[str]:
     return [translate_sentence(sentence) for sentence in sentences]
 
 
-def translate_file(english: dict) -> dict:
+def translate_file(english: dict[str, T]) -> dict[str, T]:
     """Translate an entire file."""
     keys, sentences = extricate.dict_to_list(english)
 

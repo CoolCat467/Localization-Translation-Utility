@@ -27,7 +27,7 @@ __license__ = "GNU General Public License Version 3"
 
 
 from html.parser import HTMLParser
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, TypeVar
 
 import mechanicalsoup
 import trio
@@ -36,6 +36,8 @@ from localization_translation import extricate
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+
+T = TypeVar("T")
 
 
 async def gather(*tasks: Sequence) -> list:
@@ -134,7 +136,7 @@ def translate_block(sentences: list[str], threshold: int = 2048) -> list[str]:
     return result
 
 
-def translate_file(english: dict, block_threshold: int = 2048) -> dict:
+def translate_file(english: dict[str, T], block_threshold: int = 2048) -> dict[str, T]:
     """Translate an entire file."""
     keys, sentences = extricate.dict_to_list(english)
 
