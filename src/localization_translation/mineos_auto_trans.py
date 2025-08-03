@@ -238,7 +238,7 @@ async def abstract_translate(
             if isinstance(entry, str) and entry.endswith("English.lang"):
                 search.add(section)
 
-    print(f'\nSections with English.lang files: {", ".join(search)}\n')
+    print(f"\nSections with English.lang files: {', '.join(search)}\n")
 
     new_files = 1
 

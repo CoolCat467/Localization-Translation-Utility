@@ -86,7 +86,7 @@ def dict_to_list(data: Any) -> tuple[list[str], list[str]]:
                     intersect = set(str(key)) & (set(CHAR_TYPE) | {SEP})
                     if intersect:
                         raise ValueError(
-                            'Dict key contains CHAR_TYPE value(s) "' f"{''.join(intersect)}" + '"',
+                            f'Dict key contains CHAR_TYPE value(s) "{"".join(intersect)}' + '"',
                         )
 
                     key = wrap_quotes(key, TYPE_CHAR[type(key).__name__])

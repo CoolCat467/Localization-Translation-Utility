@@ -67,7 +67,7 @@ class IndentFormat(NamedTuple):
 
 def lang_to_dict(
     lang_data: str,
-) -> tuple[dict[str, Any], CommentData]:
+) -> tuple[dict[int | str, Any], CommentData]:
     """Return data and comments from lua table."""
     all_tokens: list[lua_parser.Token] = list(lua_parser.tokenize_cst(lang_data))
     parser = lua_parser.Parser([t for t in all_tokens if not isinstance(t, lua_parser.CSTToken)])
@@ -160,11 +160,12 @@ def dict_to_lang(
 
     root = cast("dict[str | int, Any]", data)
     roots: list[dict[str | int, Any]] = []
-    last_key: str | int | None = None
+    last_key: str | int | float | None = None
 
     in_blocks = 0
     has_keys = False
     in_unmarked = False
+    just_did_list_entry = False
     unmarked_index = 1
     unmarked_groups: list[tuple[bool, int]] = []
 
@@ -189,22 +190,36 @@ def dict_to_lang(
 
             # Handle case where it's just a list and no identifiers
             # recorded
-            if all(isinstance(key, int) and not isinstance(value, dict) for key, value in root.items()):
+            if root and all(isinstance(key, int) and not isinstance(value, dict) for key, value in root.items()):
+                just_did_list_entry = True
                 true_start = min(map(int, root))
                 start = max(true_start, 1)
                 end = max(map(int, root))
                 # print(f'{root = }')
                 # print(f'{start = } {end = }')
+                unbroken_chain = True
                 for index in range(start, end + 1):
                     # print(f'{index = }', end=" ")
-                    value = root[index]
-                    value = f'"{value}"' if isinstance(value, str) else repr(value)
+                    value = root.get(index)
+                    if value is None:
+                        unbroken_chain = False
+                        continue
+                    if isinstance(value, str):
+                        value = f'"{value}"'
+                    elif isinstance(value, int | bool):
+                        value = repr(value).lower()
+                    else:
+                        raise ValueError(f"Unhandled key {type(value) = }")
+                    if not unbroken_chain:
+                        line += f"[{index}] = "
                     line += value
                     # No comma if end and does not need other recorded value like 0
                     if index != end or start != true_start:
                         line += ","
-                    cartrage_return()
+                        cartrage_return()
                 # print()
+            else:
+                just_did_list_entry = False
         elif token.type_ == TokenType.EndBracket:
             in_blocks -= 1
             in_unmarked, unmarked_index = unmarked_groups.pop()
@@ -225,6 +240,7 @@ def dict_to_lang(
             if in_blocks > 0:
                 line += ","
             cartrage_return()
+            just_did_list_entry = False
         elif token.type_ == TokenType.Newline:
             cartrage_return()
         elif token.type_ in {TokenType.Identifier, TokenType.Numeric}:
@@ -232,16 +248,18 @@ def dict_to_lang(
             last_key = token.text
             if token.type_ == TokenType.Numeric:
                 line += f"[{token.text}]"
-                last_key = int(last_key)
+                last_key = int(last_key) if "." not in last_key else float(last_key)
             else:
                 line += token.text
             line += " = "
             if comments.keys[idx + 1].type_ != TokenType.StartBracket:
+                if last_key not in root:
+                    continue
                 value = root[last_key]
-                assert isinstance(value, str | int | float), "should not unpack collections"
+                assert isinstance(value, str | int | float | bool), "should not unpack collections"
 
-                if isinstance(value, int | float):
-                    line += repr(value)
+                if isinstance(value, int | float | bool):
+                    line += repr(value).lower()
                 else:
                     line += f'"{value}"'
                 if comments.keys[idx + 1].type_ != TokenType.EndBracket:
@@ -251,6 +269,8 @@ def dict_to_lang(
             line += token.text
             cartrage_return()
         elif token.type_ == TokenType.Whitespace:
+            if just_did_list_entry:
+                continue
             line += token.text
         ##elif isinstance(token, lua_parser.Separator):
         ##    line += token.text
@@ -259,7 +279,7 @@ def dict_to_lang(
 
     ##    write_dict(comments.keys)
 
-    return "\n".join(lines)
+    return "\n".join(lines) or "{}"
 
 
 def run() -> None:

@@ -390,7 +390,7 @@ class Parser:
         token = self.next()
         if token.text not in options:
             self.fail(
-                f"Expected {list_or([repr(x) for x in options])}, got {token.text!r} ({token.location()})",
+                f"Expected {list_or([repr(x) for x in sorted(options)])}, got {token.text!r} ({token.location()})",
             )
         return token
 
