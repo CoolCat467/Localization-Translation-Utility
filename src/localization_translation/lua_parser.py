@@ -622,7 +622,7 @@ def parse_lua_table(table_value: Value[Any], convert_lists: bool = True) -> tupl
         table: dict[str | int, object],
     ) -> tuple[str | int, object]:
         """Read a table field value."""
-        assert value.name in {"Field", "Assignment"}
+        assert value.name in {"Field", "Assignment"}, f"{value.name = }"
         if value.name == "Assignment":
             return read_assignment(value)
         # if value.name == "Indexed":
@@ -673,6 +673,44 @@ def parse_lua_table(table_value: Value[Any], convert_lists: bool = True) -> tupl
 
     return read_value(table_value), from_tokens
     # return value.unpack_join()
+
+
+def convert_lists(table_data: dict[Any, Any]) -> dict[Any, Any]:
+    """Convert internal numeric tables to lists."""
+
+    def convert_dict(data: dict[Any, T]) -> dict[Any, T] | list[T]:
+        if all(isinstance(key, int) for key in data):
+            return [data[i + 1] for i in range(len(data))]
+        new = {}
+        for k, v in data.items():
+            if isinstance(v, dict):
+                new[k] = convert_dict(v)
+            else:
+                new[k] = v
+        return new
+
+    value = convert_dict(table_data)
+    assert isinstance(value, dict)
+    return value
+
+
+def undo_convert_lists(table_data: dict[Any, Any]) -> dict[Any, Any]:
+    """Convert internal lists to numeric tables."""
+
+    def convert_dict(data: dict[Any, T] | list[T]) -> dict[Any, T]:
+        if isinstance(data, list):
+            return {i + 1: value for i, value in enumerate(data)}
+        new = {}
+        for k, v in data.items():
+            if isinstance(v, dict | list):
+                new[k] = convert_dict(v)
+            else:
+                new[k] = v
+        return new
+
+    value = convert_dict(table_data)
+    assert isinstance(value, dict)
+    return value
 
 
 if __name__ == "__main__":
