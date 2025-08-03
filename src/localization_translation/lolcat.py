@@ -88,6 +88,9 @@ class ResponseParser(HTMLParser):
 
 def translate_sentence(sentence: str) -> str:
     """Translate sentence."""
+    if not sentence.strip():
+        return sentence
+
     browser = mechanicalsoup.StatefulBrowser(soup_config={"features": "html.parser"})
     browser.open("https://funtranslations.com/lolcat")
     browser.select_form("form#textform")
@@ -100,7 +103,10 @@ def translate_sentence(sentence: str) -> str:
 
     value = parser.value
     if value is None:
-        raise LookupError("Failed to find lolcat span in HTML response")
+        exc = LookupError("Failed to find lolcat span in HTML response")
+        exc.add_note(f"{sentence = }")
+        exc.add_note(response.text)
+        raise exc
     if value.endswith(" ") and not sentence.endswith(" "):
         value = value[:-1]
 
@@ -121,17 +127,39 @@ def translate_block(sentences: list[str], threshold: int = 2048) -> list[str]:
     """Translate sentences in bulk in batches if very big."""
     sep = "^&^"
     result = []
-    to_translate = list(reversed(sentences))
+    to_translate = tuple(sentences)
     while to_translate:
         block = ""
-        while to_translate and len(block) < threshold:
-            block += to_translate.pop() + sep
+        block_count = 0
+        while block_count < len(to_translate) and len(block) < threshold:
+            block += to_translate[block_count] + sep
+            block_count += 1
         if not block:
             break
         block = block.removesuffix(sep)
         response = translate_sentence(block)
-        result.extend(response.split(sep))
+        block_result = response.split(sep)
+        ##        assert len(block_result) == block_count, f"{len(block_result)} != {block_count}"
+        if len(block_result) != block_count:
+            print("Something broke, manually going through one by one")
+            for sentence in to_translate[:block_count]:
+                translated = translate_sentence(sentence)
+                print(f"{sentence!r} -> {translated!r}")
+                result.append(translated)
+        else:
+            result.extend(block_result)
+        ##        print(f'{len(to_translate) - block_count = }')
+        to_translate = to_translate[block_count:]
+    ##        print(f'{len(to_translate) = }')
     ##        result.append(translate_sentence(to_translate.pop()))
+    if len(result) != len(sentences):
+        for idx in range(max(len(result), len(sentences))):
+            if idx < len(sentences):
+                print(repr(sentences[idx]), end="")
+            print(" --> ", end="")
+            if idx < len(result):
+                print(repr(result[idx]), end="")
+            print()
     assert len(result) == len(sentences), f"{len(result)} != {len(sentences)}"
     return result
 
@@ -140,15 +168,57 @@ def translate_file(english: dict[str, T], block_threshold: int = 2048) -> dict[s
     """Translate an entire file."""
     keys, sentences = extricate.dict_to_list(english)
 
-    results = translate_block(sentences, block_threshold)
+    # There apparently exist some bad values somewhere, strip those out
+    bad_values = set()
+    good_values = []
+    for idx, sentence in enumerate(sentences):
+        if isinstance(sentence, str) and sentence.strip():
+            good_values.append(idx)
+        else:
+            bad_values.add(idx)
 
-    for orig, new in zip(enumerate(sentences), results, strict=True):
-        idx, old = orig
+    # Only translate non-blanks
+    translate_sentences = [sentences[idx] for idx in good_values]
+
+    ##    # Handle duplicate values
+    ##    duplicate_values = {}
+    ##    translate_sentences = []
+    ##    for idx in good_values:
+    ##        sentence = sentences[idx]
+    ##        if sentence in translate_sentences:
+    ##            duplicate_values[idx] = translate_sentences.index(sentence)
+    ##        else:
+    ##            translate_sentences.append(sentence)
+
+    translate_results = translate_block(translate_sentences, block_threshold)
+
+    ##    # Rebuild with duplicate values
+    ##    translate_results = []
+    ##    for deduped_index, idx in enumerate(good_values):
+    ##        duplicate_entry = duplicate_values.get(idx)
+    ##        if duplicate_entry is not None:
+    ##            translate_results.append(translate_results[duplicate_entry])
+    ##        else:
+    ##            translate_results.append(translate_deduplicated_results[deduped_index])
+
+    # Rebuild full results with blanks
+    results = []
+    index = 0
+    for idx, original in enumerate(sentences):
+        if idx in bad_values:
+            results.append(original)
+        else:
+            results.append(translate_results[index])
+            index += 1
+
+    for (idx, old), new in zip(enumerate(sentences), results, strict=True):
         if new is None or not isinstance(old, str):
             results[idx] = old
             continue
         if old.endswith(" ") and not new.endswith(" "):
             results[idx] = new + " "
+    assert len(results) == len(sentences)
+    ##    print("\n".join(" --> ".join(x) for x in zip(sentences, results)))
     return extricate.list_to_dict(keys, results)  # type: ignore
 
 
