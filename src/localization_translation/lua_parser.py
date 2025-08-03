@@ -377,12 +377,13 @@ class Parser:
         """Return representation of self."""
         return f"{self.__class__.__name__}({self.rest_tokens()!r})"
 
-    def expect(self, text: str) -> None:
+    def expect(self, text: str) -> Token:
         """Expect next token text to be text."""
         token = self.next()
         got = token.text
         if got != text:
             self.fail(f"Expected {text!r}, got {got!r} ({token.location()})")
+        return token
 
     def expect_or(self, options: Collection[str]) -> Token:
         """Expect next token text to be text. Return the token we got."""
@@ -465,11 +466,11 @@ class Parser:
     def parse_field(self) -> Value[Any]:
         """Parse table field."""
         if self.lookup() == "[":
-            self.expect("[")
+            start_token = self.expect("[")
             value = self.parse_value()
             self.expect("]")
             self.expect_type(Assignment)
-            return Value("Field", value, self.parse_value())
+            return Value("Field", value, self.parse_value(), from_token=start_token)
         peek = self.peek()
         if isinstance(peek, Identifier):
             return self.parse_identifier()
@@ -478,11 +479,12 @@ class Parser:
         index = self.next_indexed_field.pop()
         self.next_indexed_field.append(index + 1)
         # return Value("Indexed", self.parse_value())
-        return Value("Field", Value("Integer", index), self.parse_value())
+        field_value = self.parse_value()
+        return Value("Field", Value("Integer", index), field_value, from_token=field_value.from_token)
 
     def parse_table(self) -> Value[Value[Any]]:
         """Parse table."""
-        self.expect("{")
+        start_token = self.expect("{")
         self.next_indexed_field.append(1)
         fields: list[Value[object | Value[object]]] = []
         while self.lookup() != "}":
@@ -495,7 +497,7 @@ class Parser:
                 self.back()
         self.next_indexed_field.pop()
         self.expect("}")
-        return Value("Table", *fields)
+        return Value("Table", *fields, from_token=start_token)
 
     def parse_function_arguments(self) -> list[Value[Any]]:
         """Parse function call arguments."""
@@ -586,8 +588,8 @@ def parse_lua_table(table_value: Value[Any], convert_lists: bool = True) -> tupl
             "Integer",
             "Identifier",
         }:
-            assert value.from_token is not None
-            from_tokens.append(value.from_token)
+            if value.from_token is not None:
+                from_tokens.append(value.from_token)
             return value.args[0]
         if value.name == "Table":
             return read_table(cast("Value[Value[object]]", value))
@@ -610,8 +612,8 @@ def parse_lua_table(table_value: Value[Any], convert_lists: bool = True) -> tupl
     ) -> tuple[str, object]:
         """Read an Assignment value."""
         assert value.name == "Assignment"
-        assert value.from_token is not None
-        from_tokens.append(value.from_token)
+        if value.from_token is not None:
+            from_tokens.append(value.from_token)
         key, data = value.args
         return (read_value(key), read_value(data))  # type: ignore[return-value]
 
@@ -626,8 +628,8 @@ def parse_lua_table(table_value: Value[Any], convert_lists: bool = True) -> tupl
         # if value.name == "Indexed":
         #    return (str(len(table)), read_value(value.args[0]))
         if value.name == "Field":
-            assert value.from_token is not None
-            from_tokens.append(value.from_token)
+            if value.from_token is not None:
+                from_tokens.append(value.from_token)
             field, field_value = value.args
             assert isinstance(field, Value)
             assert isinstance(field_value, Value)
@@ -641,8 +643,8 @@ def parse_lua_table(table_value: Value[Any], convert_lists: bool = True) -> tupl
     ) -> dict[str | int, object] | list[object]:
         """Read a table and all of it's fields."""
         assert value.name == "Table"
-        assert value.from_token is not None
-        from_tokens.append(value.from_token)
+        if value.from_token is not None:
+            from_tokens.append(value.from_token)
         table: dict[str | int, object] = {}
 
         last_int_key = 0
@@ -663,8 +665,8 @@ def parse_lua_table(table_value: Value[Any], convert_lists: bool = True) -> tupl
         return [table[i + 1] for i in range(len(table))]
 
     def read_keyword(value: Value[str]) -> object:
-        assert value.from_token is not None
-        from_tokens.append(value.from_token)
+        if value.from_token is not None:
+            from_tokens.append(value.from_token)
         if value.args[0] == "nil":
             return None
         raise NotImplementedError(value)
