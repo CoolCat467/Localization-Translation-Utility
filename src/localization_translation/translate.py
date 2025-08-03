@@ -36,7 +36,7 @@ import trio
 from localization_translation import agents
 
 if TYPE_CHECKING:
-    from collections.abc import Awaitable, Sequence
+    from collections.abc import Awaitable, Callable, Sequence
 
 TIMEOUT: Final[int] = 4
 AGENT = random.randint(0, 100000)  # noqa: S311
@@ -44,12 +44,12 @@ AGENT = random.randint(0, 100000)  # noqa: S311
 T = TypeVar("T")
 
 
-async def gather(*tasks: partial[Awaitable[T]]) -> list[T]:
+async def gather(*tasks: Callable[[], Awaitable[T]]) -> list[T]:
     """Gather for trio."""
 
     async def collect(
         index: int,
-        task: partial[Awaitable[T]],
+        task: Callable[[], Awaitable[T]],
         results: dict[int, T],
     ) -> None:
         results[index] = await task()
@@ -165,7 +165,7 @@ async def translate_async(
     source_lang: str,
 ) -> list[str | int]:
     """Translate multiple sentences asynchronously."""
-    coros: list[partial[Awaitable[str | int]]] = [
+    coros: list[Callable[[], Awaitable[str | int]]] = [
         partial(get_translated_coroutine, client, q, to_lang, source_lang) for q in sentences
     ]
     return await gather(*coros)

@@ -178,7 +178,7 @@ class Segment:
                 raise ValueError(f'Expected dict or list, got "{dtype}"')
 
 
-def list_to_dict(keys: list[str], values: list[str]) -> Any:
+def list_to_dict(keys: Iterable[str], values: Iterable[str | int]) -> Any:
     """Convert split lists of compiled keys and values back into dictionary."""
 
     def handle_map(

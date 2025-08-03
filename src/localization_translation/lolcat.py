@@ -3,7 +3,7 @@
 # Programmed by CoolCat467
 
 # Lolcat Translator - Scrape lolcat translation website
-# Copyright (C) 2023-2024  CoolCat467
+# Copyright (C) 2023-2025  CoolCat467
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,31 +27,13 @@ __license__ = "GNU General Public License Version 3"
 
 
 from html.parser import HTMLParser
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TypeVar
 
 import mechanicalsoup
-import trio
 
 from localization_translation import extricate
 
-if TYPE_CHECKING:
-    from collections.abc import Sequence
-
 T = TypeVar("T")
-
-
-async def gather(*tasks: Sequence) -> list:
-    """Gather for trio."""
-
-    async def collect(index: int, task: list, results: dict[int, Any]) -> None:
-        task_func, *task_args = task
-        results[index] = await task_func(*task_args)
-
-    results: dict[int, Any] = {}
-    async with trio.open_nursery() as nursery:
-        for index, task in enumerate(tasks):
-            nursery.start_soon(collect, index, task, results)
-    return [results[i] for i in range(len(tasks))]
 
 
 class ResponseParser(HTMLParser):
@@ -66,7 +48,7 @@ class ResponseParser(HTMLParser):
         self.found = False
         self.value: str | None = None
 
-    def handle_starttag(self, tag: str, attrs: list) -> None:
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         """Set found to True if tag type and id matches search."""
         if tag == self.search_tag_type:
             creation = dict(attrs)
@@ -213,13 +195,13 @@ def translate_file(english: dict[str, T], block_threshold: int = 2048) -> dict[s
 
     for (idx, old), new in zip(enumerate(sentences), results, strict=True):
         if new is None or not isinstance(old, str):
-            results[idx] = old
+            results[idx] = old  # type: ignore[unreachable]
             continue
         if old.endswith(" ") and not new.endswith(" "):
             results[idx] = new + " "
     assert len(results) == len(sentences)
     ##    print("\n".join(" --> ".join(x) for x in zip(sentences, results)))
-    return extricate.list_to_dict(keys, results)  # type: ignore
+    return extricate.list_to_dict(keys, results)  # type: ignore[no-any-return]
 
 
 def run() -> None:

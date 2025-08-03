@@ -59,7 +59,7 @@ def async_timed(func: Callable[PS, Awaitable[T]]) -> Callable[PS, Awaitable[T]]:
     """Wrap function and print how long it took to run."""
 
     @wraps(func)
-    async def time_func(*args: PS.args, **kwargs: PS.kwargs) -> T:
+    async def time_func(*args: PS.args, **kwargs: PS.kwargs) -> T:  # type: ignore[misc]
         start = time.perf_counter()
         result = await func(*args, **kwargs)
         stop = time.perf_counter()
