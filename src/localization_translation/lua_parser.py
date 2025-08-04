@@ -678,7 +678,7 @@ def parse_lua_table(table_value: Value[Any], convert_lists: bool = True) -> tupl
 def convert_lists(table_data: dict[Any, Any]) -> dict[Any, Any]:
     """Convert internal numeric tables to lists."""
 
-    def convert_dict(data: dict[Any, T]) -> dict[Any, T] | list[T]:
+    def convert_dict(data: dict[Any, Any]) -> dict[Any, Any] | list[Any]:
         if all(isinstance(key, int) for key in data):
             return [data[i + 1] for i in range(len(data))]
         new = {}
@@ -697,7 +697,7 @@ def convert_lists(table_data: dict[Any, Any]) -> dict[Any, Any]:
 def undo_convert_lists(table_data: dict[Any, Any]) -> dict[Any, Any]:
     """Convert internal lists to numeric tables."""
 
-    def convert_dict(data: dict[Any, T] | list[T]) -> dict[Any, T]:
+    def convert_dict(data: dict[Any, Any] | list[Any]) -> dict[Any, Any]:
         if isinstance(data, list):
             return {i + 1: value for i, value in enumerate(data)}
         new = {}

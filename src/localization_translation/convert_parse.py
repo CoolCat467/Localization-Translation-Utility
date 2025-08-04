@@ -26,7 +26,7 @@ __version__ = "0.0.0"
 __license__ = "GNU General Public License Version 3"
 
 from enum import IntEnum, auto
-from typing import Any, NamedTuple, cast
+from typing import Any, NamedTuple
 
 from localization_translation import lua_parser
 
@@ -67,7 +67,7 @@ class IndentFormat(NamedTuple):
 
 def lang_to_dict(
     lang_data: str,
-) -> tuple[dict[int | str, Any], CommentData]:
+) -> tuple[dict[str | int | float, Any], CommentData]:
     """Return data and comments from lua table."""
     all_tokens: list[lua_parser.Token] = list(lua_parser.tokenize_cst(lang_data))
     parser = lua_parser.Parser([t for t in all_tokens if not isinstance(t, lua_parser.CSTToken)])
@@ -134,7 +134,7 @@ def lang_to_dict(
 
 
 def dict_to_lang(
-    data: dict[str, Any],
+    data: dict[str | int | float, Any],
     comments: CommentData,
 ) -> str:
     """Convert data and comments to MineOS file data."""
@@ -158,8 +158,8 @@ def dict_to_lang(
             line = ""
         line += indent.indent_text
 
-    root = cast("dict[str | int, Any]", data)
-    roots: list[dict[str | int, Any]] = []
+    root = data
+    roots: list[dict[str | int | float, Any]] = []
     last_key: str | int | float | None = None
 
     in_blocks = 0
