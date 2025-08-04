@@ -28,12 +28,13 @@ __license__ = "GNU General Public License Version 3"
 
 import copy
 import os
+import traceback
 from typing import TYPE_CHECKING, Any
 
 import httpx
 import trio
 
-from localization_translation import convert, extricate, languages, lolcat, translate
+from localization_translation import convert_parse, extricate, languages, lolcat, lua_parser, translate
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
@@ -158,7 +159,7 @@ async def download_lang(
     client: httpx.AsyncClient,
 ) -> tuple[dict[str, Any], dict[str, dict[int, str]]]:
     """Download file from MineOS repository and decode as lang file. Return dict and comments."""
-    return convert.lang_to_json(await download_file(path, cache_dir, client))
+    return convert_parse.lang_to_dict(await download_file(path, cache_dir, client))
 
 
 def split(path: str) -> tuple[str, str]:
@@ -203,7 +204,9 @@ async def translate_file_given_coro(
         if new_lang:
             print(f"END {to_lang.title()}")
             ensure_folder_exists(filename)
-            convert.write_lang_file(filename, new_lang, comments)
+            with open(filename, "w", encoding="utf-8") as file_point:  # noqa: ASYNC230
+                file_point.write(convert_parse.dict_to_lang(new_lang, comments))
+            # convert.write_lang_file(filename, new_lang, comments)
             changed += 1
         else:
             print(f"END {to_lang.title()}: not changed")
@@ -229,11 +232,14 @@ async def abstract_translate(
 
     print("\nGettting files...")
     files, file_comments = await download_lang("Installer/Files.cfg", cache_folder, client)
+    # print(f'{files = }')
+    converted_files = lua_parser.convert_lists(files)
+    print(f"{converted_files = }")
     # Get true copy
     orig_files = copy.deepcopy(files)
 
     search: set[str] = set()
-    for section, data in files.items():
+    for section, data in converted_files.items():
         for entry in data:
             if isinstance(entry, str) and entry.endswith("English.lang"):
                 search.add(section)
@@ -243,7 +249,7 @@ async def abstract_translate(
     new_files = 1
 
     for section in search:
-        lang_files = [f for f in files[section] if isinstance(f, str) and f.endswith(".lang")]
+        lang_files = [f for f in converted_files[section] if isinstance(f, str) and f.endswith(".lang")]
         if section == "localizations":
             lang_files += [f"Installer/{f}" for f in lang_files]
         if not lang_files:
@@ -280,10 +286,12 @@ async def abstract_translate(
                 fname = name.replace(" ", "_")
                 fname = fname.replace("(", "").replace(")", "")
                 section_filename = f"{folder}/{fname}.lang"
-                if section_filename not in files[section]:
+                if section_filename not in converted_files[section]:
                     if folder == "Installer/Localizations":
                         continue
-                    files[section].insert(insert_start + idx, section_filename)
+                    ##print(f'{converted_files[section] = }')
+                    ##print(f'{insert_start + idx = }')
+                    converted_files[section].insert(insert_start + idx, section_filename)
 
                 real_filename = os.path.join(base_group, f"{fname}.lang")
                 if not os.path.exists(real_filename):
@@ -295,14 +303,18 @@ async def abstract_translate(
             print("\n" + "#" * 0xF + "Done with folder" + "#" * 0xF)
     print("\nLanguages have been translated and saved to upload folder!")
 
+    files = lua_parser.undo_convert_lists(converted_files)
+
     if files == orig_files:
         new_files -= 1
     else:
         print("Writing Installer/Files.cfg...")
         file_list_filename = os.path.join(base_lang, "Installer", "Files.cfg")
-        file_comments = convert.update_comment_positions(file_comments, files, orig_files)
+        # file_comments = convert.update_comment_positions(file_comments, files, orig_files)
         ensure_folder_exists(file_list_filename)
-        convert.write_lang_file(file_list_filename, files, file_comments)
+        with open(file_list_filename, "w", encoding="utf-8") as file_point:  # noqa: ASYNC230
+            file_point.write(convert_parse.dict_to_lang(files, file_comments))
+        # convert.write_lang_file(file_list_filename, files, file_comments)
 
     print(f"Done! {new_files} new files created.")
 
@@ -456,7 +468,10 @@ async def async_run() -> None:
 def run() -> None:
     """Translate MineOS localization files."""
     # import trio.testing
-    trio.run(async_run, strict_exception_groups=True)
+    try:
+        trio.run(async_run, strict_exception_groups=True)
+    except Exception:
+        traceback.print_exc()
     # , clock=trio.testing.MockClock(autojump_threshold=0))
 
 
