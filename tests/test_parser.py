@@ -273,7 +273,9 @@ def test_vk_table() -> None:
 
     exit = "Logout",
 }"""
+    # types: arg-type error: Argument 1 to "Parser" has incompatible type "tuple[Token, ...]"; expected "list[Token]"
     value = lua_parser.Parser(tuple(lua_parser.tokenize(table_source))).parse_table()
+    # types:                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     parsed = lua_parser.parse_lua_table(value)[0]
     assert parsed == {
         "leftBarOffset": 5,

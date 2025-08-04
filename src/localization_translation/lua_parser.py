@@ -38,7 +38,7 @@ from typing import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Collection, Generator
+    from collections.abc import Collection, Generator, Sequence
 
 
 class ParseError(Exception):
@@ -337,7 +337,7 @@ class Parser:
 
     __slots__ = ("i", "next_indexed_field", "tokens")
 
-    def __init__(self, tokens: list[Token]) -> None:
+    def __init__(self, tokens: Sequence[Token]) -> None:
         """Initialize with tokens list."""
         self.tokens = tokens
         self.i = 0
@@ -369,7 +369,7 @@ class Parser:
         """Go back one token."""
         self.i -= 1
 
-    def rest_tokens(self) -> list[Token]:
+    def rest_tokens(self) -> Sequence[Token]:
         """Return all tokens not processed."""
         return self.tokens[self.i : len(self.tokens)]
 

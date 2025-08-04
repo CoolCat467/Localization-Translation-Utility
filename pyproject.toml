@@ -48,7 +48,7 @@ localization_translation = ["py.typed"]
 mineos_translate = "localization_translation.cli:main"
 
 [tool.mypy]
-files = ["src/localization_translation/",]
+files = ["src/localization_translation/", "tests"]
 check_untyped_defs = true
 disallow_any_decorated = true
 disallow_any_generics = true
