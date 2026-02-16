@@ -29,7 +29,7 @@ classifiers = [
 ]
 keywords = ["localization", "translation", "utility"]
 dependencies = [
-    "trio~=0.32.0",
+    "trio~=0.33.0",
     "httpx[http2]~=0.28.1",
     "mechanicalsoup~=1.4.0",
 ]
