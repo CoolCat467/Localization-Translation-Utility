@@ -96,9 +96,12 @@ combine-as-imports = true
 [tool.typos.default.extend-identifiers]
 AmSavS = "AmSavS"
 
+[tool.typos.files]
+extend-exclude = ["local_lolcat.py"]
+
 [tool.codespell]
 ignore-words-list = 'astroid,crasher,asend'
-skip = "*/agents.py,*/languages.py"
+skip = "*/agents.py,*/languages.py,*/local_lolcat.py"
 
 [tool.pycln]
 all = true

@@ -33,7 +33,7 @@ from typing import TYPE_CHECKING, Any
 import httpx2 as httpx
 import trio
 
-from localization_translation import convert, extricate, languages, lolcat, translate
+from localization_translation import convert, extricate, languages, local_lolcat as lolcat, translate
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
