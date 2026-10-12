@@ -343,9 +343,9 @@ def translate_file(english: dict[str, T]) -> dict[str, T]:
 
     for orig, new in zip(enumerate(sentences), results, strict=True):
         idx, old = orig
-        if new is None or not isinstance(old, str):
-            results[idx] = old
-            continue
+        ##        if new is None or not isinstance(old, str):
+        ##            results[idx] = old
+        ##            continue
         if old.endswith(" ") and not new.endswith(" "):
             results[idx] = new + " "
     ##    add_unchanged()
@@ -358,7 +358,8 @@ def read_lua(path: Path) -> dict[str, str]:
         tokens = lua_parser.tokenize(fp.read())
     parser = lua_parser.Parser(list(tokens))
     value = parser.parse_value()
-    result, tokens = lua_parser.parse_lua_table(value)
+    result, _tokens = lua_parser.parse_lua_table(value)
+    assert isinstance(result, dict)
     return result
 
 
