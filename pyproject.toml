@@ -34,6 +34,7 @@ dependencies = [
     "trio>=0.34.0",
     "httpx2[http2]~=2.13.1",
     "mechanicalsoup~=1.4.0",
+    "typing-extensions>=4.16.0",
 ]
 
 [tool.setuptools.dynamic]
@@ -224,13 +225,14 @@ legacy_tox_ini = """
 
     [testenv:pytest]
     deps =
-        pytest
-        pytest-cov
-        pytest-trio
+        pytest>=9.0.2
+        pytest-cov>=7.0.0
+        pytest-trio>=0.8.0
     commands = pytest --basetemp={envtmpdir}
 
     [testenv:mypy]
     deps =
         mypy
+        pytest>=9.0.2
     commands = mypy
 """

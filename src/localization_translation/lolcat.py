@@ -86,8 +86,9 @@ def translate_sentence(sentence: str) -> str:
     value = parser.value
     if value is None:
         exc = LookupError("Failed to find lolcat span in HTML response")
-        exc.add_note(f"{sentence = }")
-        exc.add_note(response.text)
+        if hasattr(exc, "add_note"):
+            exc.add_note(f"{sentence = }")
+            exc.add_note(response.text)
         raise exc
     if value.endswith(" ") and not sentence.endswith(" "):
         value = value[:-1]

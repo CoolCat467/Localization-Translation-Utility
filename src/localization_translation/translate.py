@@ -27,11 +27,12 @@ import json
 import random
 import urllib.request
 from functools import partial
-from typing import TYPE_CHECKING, Any, Final, TypeVar, assert_never
+from typing import TYPE_CHECKING, Any, Final, TypeVar
 from urllib.parse import urlencode
 
 import httpx2 as httpx
 import trio
+from typing_extensions import assert_never
 
 from localization_translation import agents
 
