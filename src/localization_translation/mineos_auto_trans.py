@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 # Automatic Translation - Auto Translate localization files for MineOS.
-# Copyright (C) 2022-2024  CoolCat467
+# Copyright (C) 2022-2026  CoolCat467
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@ from __future__ import annotations
 
 __title__ = "Automatic Translation"
 __author__ = "CoolCat467"
-__version__ = "2.3.0"
+__version__ = "2.3.1"
 __license__ = "GNU General Public License Version 3"
 
 
@@ -30,7 +30,7 @@ import copy
 import os
 from typing import TYPE_CHECKING, Any
 
-import httpx
+import httpx2 as httpx
 import trio
 
 from localization_translation import convert, extricate, languages, lolcat, translate
@@ -116,40 +116,22 @@ def ensure_folder_exists(new_filename: str) -> None:
             os.mkdir(new_path)
 
 
-##async def download_file(path: str, cache_dir: str, client: httpx.AsyncClient) -> str:
-##    "Download file at path from MineOS repository."
-##    real_path = os.path.join(cache_dir, *path.split('/'))
-##    if not os.path.exists(real_path):
-##        ensure_folder_exists(real_path)
-##        print(f'GET {path}')
-##        response = await download_coroutine(client, mineos_url(path))
-##        j_resp = json.loads(response)
-##        data = base64.b64decode(j_resp['content'])
-##        with open(real_path, 'wb') as file:
-##            file.write(data)
-##        await trio.sleep(1)
-##        return data.decode('utf-8')
-##    print(f'Loaded {path} from cache')
-##    with open(real_path, 'r', encoding='utf-8') as file:
-##        return file.read()
-
-
 async def download_file(path: str, cache_dir: str, client: httpx.AsyncClient) -> str:
     """Download file at path from MineOS repository."""
-    real_path = os.path.join(cache_dir, *path.split("/"))
-    if not os.path.exists(real_path):
-        ensure_folder_exists(real_path)
+    real_path = await trio.Path(os.path.join(cache_dir, *path.split("/"))).absolute()
+    if not await real_path.exists():
+        ensure_folder_exists(str(real_path))
         print(f"GET {path}")
         response = await download_coroutine(client, mineos_url(path))
         # j_resp = json.loads(response)
         # data = base64.b64decode(j_resp['content'])
-        with open(real_path, "wb") as file:  # noqa: ASYNC230
-            file.write(response)
+        async with await real_path.open("wb") as file:
+            await file.write(response)
         await trio.sleep(1)
         return response.decode("utf-8")
-    print(f"Loaded {path} from cache")
-    with open(real_path, encoding="utf-8") as file:  # noqa: ASYNC230
-        return file.read()
+    print(f"Loading {path} from cache")
+    async with await real_path.open("r", encoding="utf-8") as file:
+        return await file.read()
 
 
 async def download_lang(
@@ -286,7 +268,7 @@ async def abstract_translate(
                     files[section].insert(insert_start + idx, section_filename)
 
                 real_filename = os.path.join(base_group, f"{fname}.lang")
-                if not os.path.exists(real_filename):
+                if not await trio.Path(real_filename).exists():
                     lang_data.append((to_lang, real_filename))
                 else:
                     new_files += 1

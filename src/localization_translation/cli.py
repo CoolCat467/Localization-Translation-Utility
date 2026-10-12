@@ -29,7 +29,7 @@ import argparse
 import logging
 from typing import TYPE_CHECKING
 
-import httpx
+import httpx2 as httpx
 import trio
 
 from localization_translation.mineos_auto_trans import (

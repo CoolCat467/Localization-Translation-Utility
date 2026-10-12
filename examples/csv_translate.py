@@ -30,7 +30,7 @@ import csv
 import io
 import os
 
-import httpx
+import httpx2 as httpx
 import trio
 
 from localization_translation import translate
@@ -71,20 +71,20 @@ async def download_coroutine(client: httpx.AsyncClient, url: str) -> bytes:
 
 async def download_file(path: str, cache_dir: str, client: httpx.AsyncClient) -> str:
     """Download file at path from Nanosaur2 repository."""
-    real_path = os.path.join(cache_dir, *path.split("/"))
-    if not os.path.exists(real_path):
-        ensure_folder_exists(real_path)
+    real_path = await trio.Path(os.path.join(cache_dir, *path.split("/"))).absolute()
+    if not await real_path.exists():
+        ensure_folder_exists(str(real_path))
         print(f"GET {path}")
         response = await download_coroutine(client, nanosaur_url(path))
-        ##        j_resp = json.loads(response)
-        ##        data = base64.b64decode(j_resp['content'])
-        with open(real_path, "wb") as file:  # noqa: ASYNC230
-            file.write(response)
+        # j_resp = json.loads(response)
+        # data = base64.b64decode(j_resp['content'])
+        async with await real_path.open("wb") as file:
+            await file.write(response)
         await trio.sleep(1)
         return response.decode("utf-8")
-    print(f"Loaded {path} from cache")
-    with open(real_path, encoding="utf-8") as file:  # noqa: ASYNC230
-        return file.read()
+    print(f"Loading {path} from cache")
+    async with await real_path.open("r", encoding="utf-8") as file:
+        return await file.read()
 
 
 async def translate_file(

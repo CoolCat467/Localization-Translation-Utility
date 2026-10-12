@@ -30,7 +30,7 @@ from functools import partial
 from typing import TYPE_CHECKING, Any, Final, TypeVar, assert_never
 from urllib.parse import urlencode
 
-import httpx
+import httpx2 as httpx
 import trio
 
 from localization_translation import agents

@@ -20,6 +20,8 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: 3 :: Only",
     "Topic :: Internet",
     "Topic :: Utilities",
@@ -29,8 +31,8 @@ classifiers = [
 ]
 keywords = ["localization", "translation", "utility"]
 dependencies = [
-    "trio~=0.33.0",
-    "httpx[http2]~=0.28.1",
+    "trio>=0.34.0",
+    "httpx2[http2]~=2.13.1",
     "mechanicalsoup~=1.4.0",
 ]
 
@@ -43,6 +45,21 @@ version = {attr = "localization_translation.__init__.__version__"}
 
 [tool.setuptools.package-data]
 localization_translation = ["py.typed"]
+
+[project.optional-dependencies]
+tests = [
+    "pytest>=9.0.2",
+    "pytest-cov>=7.0.0",
+    "pytest-trio>=0.8.0",
+]
+tools = [
+    "uv>=0.11.6",
+    "mypy>=1.20.1",
+    "ruff>=0.15.10",
+    "codespell>=2.4.2",
+    "pre-commit>=4.5.1",
+    "attrs>=26.1.0",
+]
 
 [project.scripts]
 mineos_translate = "localization_translation.cli:main"
@@ -141,7 +158,11 @@ extend-ignore = [
 "tests/*" = [
     "D100",  # undocumented-public-module
     "D103",  # undocumented-public-function
-    "E501",  # line too long
+    "E501",  # line-too-long
+    "CPY001",  # missing-copyright-notice
+]
+"tools/*" = [
+    "CPY001",  # missing-copyright-notice
 ]
 
 [tool.pytest.ini_options]
@@ -183,14 +204,16 @@ partial_branches = [
 [tool.tox]
 legacy_tox_ini = """
     [tox]
-    envlist = py310, py311, py312, pytest, mypy
+    envlist = py310, py311, py312, py313, py314, pytest, mypy
     isolated_build = false
 
     [gh-actions]
     python =
-        3.10: py310, pytest
+        3.10: py310, pytest, mypy
         3.11: py311, pytest
-        3.12: py312, pytest, mypy
+        3.12: py312, pytest
+        3.13: py312, pytest
+        3.14: py312, pytest, mypy
 
     [testenv]
     setenv =

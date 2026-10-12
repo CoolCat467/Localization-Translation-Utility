@@ -72,7 +72,7 @@ def lang_to_dict(
     all_tokens: list[lua_parser.Token] = list(lua_parser.tokenize_cst(lang_data))
     parser = lua_parser.Parser([t for t in all_tokens if not isinstance(t, lua_parser.CSTToken)])
     table_value = parser.parse_value()
-    data, read_tokens = lua_parser.parse_lua_table(table_value, False)
+    data, _read_tokens = lua_parser.parse_lua_table(table_value, False)
     assert isinstance(data, dict)
 
     indent_format: list[IndentFormat] = []

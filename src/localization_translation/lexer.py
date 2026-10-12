@@ -51,7 +51,7 @@ class Token:
         """Return representation of self."""
         return f"Token({self.type!r}, {self.regex!r})"
 
-    def match(self, text: str) -> tuple[None | str, str]:
+    def match(self, text: str) -> tuple[str | None, str]:
         """Match text with regular expression and return match result and non-matching text."""
         result = self.regex.match(text)
         if result is None:
